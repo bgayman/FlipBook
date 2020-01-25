@@ -58,9 +58,10 @@ public final class FlipBookGIFWriter: NSObject {
     ///   - images: images that comprise the gif
     ///   - delay: time in seconds gif should wait before moving to next frame. **Default** 0.02
     ///   - loop: number of times gif should animate. Value of 0 will cause gif to repeat indefinately **Default** 0
+    ///   - sizeRatio: scale that image should be resized to when making gif **Default** 1.0
     ///   - progress: closure called when progress is made while creating gif. Called from background thread.
     ///   - completion: closure called after gif has been composed. Called from background thread.
-    public func makeGIF(_ images: [Image], delay: CGFloat = 0.02, loop: Int = 0, progress: ((CGFloat) -> Void)?, completion: @escaping (Result<URL, Error>) -> Void) {
+    public func makeGIF(_ images: [Image], delay: CGFloat = 0.02, loop: Int = 0, sizeRatio: Float = 1.0, progress: ((CGFloat) -> Void)?, completion: @escaping (Result<URL, Error>) -> Void) {
         var images: [Image?] = images
         let count = images.count
         Self.queue.async { [weak self] in
@@ -95,5 +96,25 @@ public final class FlipBookGIFWriter: NSObject {
                 completion(.success(self.fileOutputURL))
             }
         }
+    }
+}
+
+// MARK: - CGImage + Resize -
+/// Add resizing helper function
+fileprivate extension CGImage {
+    
+    /// Resizes image based on ration to natural size
+    /// - Parameter ratio: Ration that represents the size of the image relative to its natural size
+    func resize(with ratio: Float) -> CGImage? {
+        let imageWidth: Int = Int(Float(self.width) * ratio)
+        let imageHeight: Int = Int(Float(self.height) * ratio)
+        
+        guard let colorSpace = self.colorSpace else { return nil }
+        guard let context = CGContext(data: nil, width: imageWidth, height: imageHeight, bitsPerComponent: self.bitsPerComponent, bytesPerRow: self.bytesPerRow, space: colorSpace, bitmapInfo: self.alphaInfo.rawValue) else { return nil }
+        
+        context.interpolationQuality = .low
+        context.draw(self, in: CGRect(x: 0, y: 0, width: imageWidth, height: imageHeight))
+        
+        return context.makeImage()
     }
 }

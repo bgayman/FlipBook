@@ -78,7 +78,7 @@ public final class FlipBookAssetWriter: NSObject {
     }()
     
     /// The frame rate of a recording without a `startDate` and `endDate`.
-    /// **Note** this value is ignored if both `startDate` and `endDate` are non-null.
+    /// **Note** this value is ignored if both `startDate` and `endDate` are non-null. Also not, full framerate gifs can be memory intensive.
     /// **Default** is 60 frames per second
     public var preferredFramesPerSecond: Int = 60
     
@@ -91,6 +91,9 @@ public final class FlipBookAssetWriter: NSObject {
     
     /// The `Date` for when the recording stopped
     public var endDate: Date?
+    
+    /// The amount images in animated gifs should be scaled by. Fullsize gif images can be memory intensive. **Default** `0.5`
+    public var gifImageScale: Float = 0.5
     
     // MARK: - Private Properties -
     
@@ -188,6 +191,7 @@ public final class FlipBookAssetWriter: NSObject {
         case .gif:
             gifWriter?.makeGIF(frames.compactMap { $0 },
                                delay: CGFloat(1.0) / CGFloat(preferredFramesPerSecond),
+                               sizeRatio: gifImageScale,
                                progress: progress,
                                completion: { (result) in
                                 switch result {
