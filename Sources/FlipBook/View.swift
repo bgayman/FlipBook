@@ -42,9 +42,8 @@ extension View {
 
         layer?.presentation()?.render(in: context.cgContext)
         
-        guard let cgImage = imgRep.cgImage else { return nil }
-
-        let image = NSImage(cgImage: cgImage, size: bounds.size)
+        let image = NSImage(size: bounds.size)
+        image.addRepresentation(imgRep)
         
         wantsLayer = wantedLayer
         isHidden = wasHidden
