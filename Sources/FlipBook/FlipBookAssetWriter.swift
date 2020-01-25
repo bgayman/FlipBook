@@ -187,6 +187,7 @@ public final class FlipBookAssetWriter: NSObject {
 
         case .gif:
             gifWriter?.makeGIF(frames.compactMap { $0 },
+                               delay: CGFloat(1.0) / CGFloat(preferredFramesPerSecond),
                                progress: progress,
                                completion: { (result) in
                                 switch result {

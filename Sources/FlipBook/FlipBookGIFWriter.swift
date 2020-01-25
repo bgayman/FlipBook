@@ -56,17 +56,17 @@ public final class FlipBookGIFWriter: NSObject {
     /// Function that takes an array of images and composes an animated gif with them
     /// - Parameters:
     ///   - images: images that comprise the gif
-    ///   - delay: time in seconds gif should wait before animating
+    ///   - delay: time in seconds gif should wait before moving to next frame. **Default** 0.02
     ///   - loop: number of times gif should animate. Value of 0 will cause gif to repeat indefinately **Default** 0
     ///   - progress: closure called when progress is made while creating gif. Called from background thread.
     ///   - completion: closure called after gif has been composed. Called from background thread.
-    public func makeGIF(_ images: [Image], delay: CGFloat = 0.0, loop: Int = 0, progress: ((CGFloat) -> Void)?, completion: @escaping (Result<URL, Error>) -> Void) {
+    public func makeGIF(_ images: [Image], delay: CGFloat = 0.02, loop: Int = 0, progress: ((CGFloat) -> Void)?, completion: @escaping (Result<URL, Error>) -> Void) {
         var images: [Image?] = images
         let count = images.count
         Self.queue.async { [weak self] in
             guard let self = self else { return }
             let gifSettings = [
-                kCGImagePropertyGIFDictionary as String: [kCGImagePropertyGIFLoopCount as String: loop]
+                kCGImagePropertyGIFDictionary as String: [kCGImagePropertyGIFLoopCount as String: loop, kCGImagePropertyGIFHasGlobalColorMap as String: false]
             ]
             let imageSettings = [
                 kCGImagePropertyGIFDictionary as String: [kCGImagePropertyGIFDelayTime as String: delay]
