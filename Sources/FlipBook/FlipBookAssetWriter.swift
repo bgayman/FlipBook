@@ -166,7 +166,7 @@ public final class FlipBookAssetWriter: NSObject {
     private func makeWriter() throws -> AVAssetWriter {
         let writer = try AVAssetWriter(url: fileOutputURL, fileType: .mov)
         let settings: [String : Any] = [
-            AVVideoCodecKey: AVVideoCodecType.h264,
+            AVVideoCodecKey: AVVideoCodecH264,
             AVVideoWidthKey: size.width,
             AVVideoHeightKey: size.height
             ]
