@@ -14,20 +14,12 @@ extension View {
     }
     
     func fb_makeViewSnapshot() -> Image? {
-        let wasHidden = isHidden
-        let wantedLayer = wantsLayer
-        
-        isHidden = false
-        wantsLayer = true
-        
-        let image = NSImage(size: bounds.size)
-        image.lockFocus()
-        guard let context: CGContext = NSGraphicsContext.current?.cgContext else { return nil }
-        layer?.presentation()?.render(in: context)
-        image.unlockFocus()
-        
-        wantsLayer = wantedLayer
-        isHidden = wasHidden
+        guard let bitmapRep = bitmapImageRepForCachingDisplayInRect(bounds) else { return NSImage() }
+        cacheDisplayInRect(bounds, toBitmapImageRep: bitmapRep)
+        let image = NSImage()
+        image.addRepresentation(bitmapRep)
+        let scale = window?.backingScaleFactor ?? 1.0
+        bitmapRep.size = CGSize(width: bounds.size.width * scale, height: bounds.size.height * scale)
         return image
     }
 }
