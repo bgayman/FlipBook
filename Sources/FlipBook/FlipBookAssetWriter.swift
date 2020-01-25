@@ -242,7 +242,7 @@ public final class FlipBookAssetWriter: NSObject {
         let attributes: [String: Any] = [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32ARGB,
             kCVPixelBufferWidthKey as String: size.width,
-            kCVPixelBufferHeightKey as String: size.width
+            kCVPixelBufferHeightKey as String: size.height
         ]
         
         adapter = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: input!, sourcePixelBufferAttributes: attributes)

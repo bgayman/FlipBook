@@ -10,7 +10,7 @@ import AppKit
 public typealias View = NSView
 extension View {
     var scale: CGFloat {
-        window?.backingScaleFactor ?? 1.0
+        Screen.main?.backingScaleFactor ?? 1.0
     }
     
     func fb_makeViewSnapshot() -> Image? {
@@ -57,11 +57,11 @@ public typealias View = UIView
 extension View {
     
     var scale: CGFloat {
-        window?.scale ?? 1.0
+        Screen.main.scale ?? 1.0
     }
     
     func fb_makeViewSnapshot() -> Image? {
-        UIGraphicsBeginImageContextWithOptions(frame.size, false, 0)
+        UIGraphicsBeginImageContextWithOptions(frame.size, true, 0)
         guard let context = UIGraphicsGetCurrentContext() else { return nil }
         layer.presentation()?.render(in: context)
         let rasterizedView = UIGraphicsGetImageFromCurrentImageContext()
