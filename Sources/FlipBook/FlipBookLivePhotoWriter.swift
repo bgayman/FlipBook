@@ -140,7 +140,6 @@ public final class FlipBookLivePhotoWriter: NSObject {
                 case .success(let url):
                     _ = PHLivePhoto.request(withResourceFileURLs: [pairImageURL, url], placeholderImage: nil, targetSize: .zero, contentMode: .aspectFit) { (livePhoto, info) in
                         guard let livePhoto = livePhoto, info[PHLivePhotoInfoIsDegradedKey] as? Bool == false  else {
-                            DispatchQueue.main.async { completion(.failure(FlipBookLivePhotoWriterError.livePhotoDegraded)) }
                             return
                         }
                         DispatchQueue.main.async { completion(.success((livePhoto, LivePhotoResources(imageURL: pairImageURL, videoURL: url)))) }
