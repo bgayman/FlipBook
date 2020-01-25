@@ -31,7 +31,7 @@ extension View {
                                                    samplesPerPixel: 4,
                                                    hasAlpha: true,
                                                    isPlanar: false,
-                                                   colorSpaceName: NSDeviceRGBColorSpace,
+                                                   colorSpaceName: NSColorSpaceName.deviceRGB,
                                                    bytesPerRow: 0,
                                                    bitsPerPixel: 0)
         imageRepresentation?.size = bounds.size
@@ -40,9 +40,11 @@ extension View {
             return nil
         }
 
-        render(in: context.cgContext)
+        layer?.presentation()?.render(in: context.cgContext)
+        
+        guard let cgImage = imgRep.cgImage else { return nil }
 
-        let image = NSImage(cgImage: imageRepresentation.cgImage!, size: bounds.size)
+        let image = NSImage(cgImage: cgImage, size: bounds.size)
         
         wantsLayer = wantedLayer
         isHidden = wasHidden
