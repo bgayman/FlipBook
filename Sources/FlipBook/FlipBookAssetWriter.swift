@@ -222,11 +222,20 @@ public final class FlipBookAssetWriter: NSObject {
             throw FlipBookAssetWriterError.couldNotWriteAsset
         }
         let writer = try AVAssetWriter(url: fileURL, fileType: .mov)
+        #if !os(macOS)
         let settings: [String : Any] = [
             AVVideoCodecKey: AVVideoCodecH264,
             AVVideoWidthKey: size.width,
             AVVideoHeightKey: size.height
-            ]
+        ]
+        #else
+        let settings: [String : Any] = [
+            AVVideoCodecKey: AVVideoCodecType.h264,
+            AVVideoWidthKey: size.width,
+            AVVideoHeightKey: size.height
+        ]
+        #endif
+        
         
         input = AVAssetWriterInput(mediaType: .video, outputSettings: settings)
         

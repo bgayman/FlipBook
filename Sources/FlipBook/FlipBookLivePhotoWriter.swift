@@ -7,7 +7,11 @@
 
 import Foundation
 import AVFoundation
+#if !os(macOS)
 import MobileCoreServices
+#else
+import CoreServices
+#endif
 import Photos
 
 // MARK: - LivePhotoResources -
@@ -182,11 +186,19 @@ public final class FlipBookLivePhotoWriter: NSObject {
             videoReader?.add(videoReaderOutput)
             
             // Create Video Writer Input
+            #if !os(macOS)
             let videoWriterInput = AVAssetWriterInput(mediaType: .video, outputSettings: [
                 AVVideoCodecKey: AVVideoCodecH264,
                 AVVideoWidthKey: videoTrack.naturalSize.width,
                 AVVideoHeightKey: videoTrack.naturalSize.height
             ])
+            #else
+            let videoWriterInput = AVAssetWriterInput(mediaType: .video, outputSettings: [
+                AVVideoCodecKey: AVVideoCodecType.h264,
+                AVVideoWidthKey: videoTrack.naturalSize.width,
+                AVVideoHeightKey: videoTrack.naturalSize.height
+            ])
+            #endif
             videoWriterInput.transform = videoTrack.preferredTransform
             videoWriterInput.expectsMediaDataInRealTime = true
             assetWriter?.add(videoWriterInput)

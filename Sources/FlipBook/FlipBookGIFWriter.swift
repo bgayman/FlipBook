@@ -7,7 +7,11 @@
 
 import AVFoundation
 import ImageIO
+#if !os(macOS)
 import MobileCoreServices
+#else
+import CoreServices
+#endif
 
 // MARK: - FlipBookGIFWriter -
 
