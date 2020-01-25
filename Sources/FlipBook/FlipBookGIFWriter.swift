@@ -75,13 +75,20 @@ public final class FlipBookGIFWriter: NSObject {
                 completion(.failure(FlipBookGIFWriterError.couldNotCreateDestination))
                 return
             }
+            let urls = images.indices.compactMap { self.makeFileOutputURL(fileName: "img\($0).jpg") }
+            zip(images, urls).forEach {
+                let data = $0.0?.jpegRep
+                try? data?.write(to: $0.1)
+            }
             CGImageDestinationSetProperties(destination, gifSettings as CFDictionary)
-            for index in images.indices {
+            for index in urls.indices {
                 autoreleasepool {
-                    let image = images[index]
-                    if let cgImage = image?.cgI {
-                        CGImageDestinationAddImage(destination, cgImage, imageSettings as CFDictionary)
+                    let url = urls[index]
+                    guard let source = CGImageSourceCreateWithURL(url as CFURL, nil) else {
+                        print("source is nil")
+                        return
                     }
+                    CGImageDestinationAddImageFromSource(destination, source, index, imageSettings as CFDictionary)
                     images[index] = nil
                     progress?(CGFloat(index + 1) / CGFloat(count))
                 }
@@ -92,6 +99,21 @@ public final class FlipBookGIFWriter: NSObject {
             } else {
                 completion(.success(self.fileOutputURL))
             }
+        }
+    }
+    
+    /// Function that returns the default file url for the generated video
+    private func makeFileOutputURL(fileName: String = "FlipBook.gif") -> URL? {
+        do {
+            var cachesDirectory: URL = try FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+            cachesDirectory.appendPathComponent(fileName)
+            if FileManager.default.fileExists(atPath: cachesDirectory.path) {
+                try FileManager.default.removeItem(atPath: cachesDirectory.path)
+            }
+            return cachesDirectory
+        } catch {
+            print(error)
+            return nil
         }
     }
 }
