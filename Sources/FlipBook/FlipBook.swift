@@ -88,7 +88,6 @@ public final class FlipBook: NSObject {
     public func stop() {
         #if os(OSX)
         source?.cancel()
-        source = nil
         queue = nil
         #else
         guard let displayLink = self.displayLink else {
