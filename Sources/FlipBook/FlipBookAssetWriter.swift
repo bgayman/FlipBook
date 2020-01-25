@@ -148,7 +148,7 @@ public final class FlipBookAssetWriter: NSObject {
         }
     }
         
-    // MARK: - Internal Methods -
+    // MARK: - Private Methods -
     
     /// Function that returns the default file url for the generated video
     private func makeFileOutputURL() -> URL {
