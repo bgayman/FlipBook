@@ -14,8 +14,8 @@ extension View {
     }
     
     func fb_makeViewSnapshot() -> Image? {
-        guard let bitmapRep = bitmapImageRepForCachingDisplayInRect(bounds) else { return NSImage() }
-        cacheDisplayInRect(bounds, toBitmapImageRep: bitmapRep)
+        guard let bitmapRep = bitmapImageRepForCachingDisplay(in: bounds) else { return NSImage() }
+        cacheDisplay(in: bounds, to: bitmapRep)
         let image = NSImage()
         image.addRepresentation(bitmapRep)
         let scale = window?.backingScaleFactor ?? 1.0
