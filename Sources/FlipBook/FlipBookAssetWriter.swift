@@ -100,6 +100,7 @@ public final class FlipBookAssetWriter: NSObject {
     ///   - completion: closure that is called when the video has been created with the `URL` for the created video. `completion` will be called from a background thread
     public func createVideoFromCapturedFrames(progress: ((CGFloat) -> Void)?, completion: @escaping (Result<URL, Error>) -> Void) {
         guard frames.isEmpty == false,
+              let fileURL = self.fileOutputURL,
               let buffer = frames[0]?.cgImage?.makePixelBuffer() else {
             completion(.failure(FlipBookAssetWriterError.noFrames))
             return
@@ -140,7 +141,7 @@ public final class FlipBookAssetWriter: NSObject {
                 
                 self.input?.markAsFinished()
                 writer.finishWriting {
-                    completion(.success(self.fileOutputURL))
+                    completion(.success(fileURL))
                 }
             }
         } catch {
@@ -171,7 +172,7 @@ public final class FlipBookAssetWriter: NSObject {
         guard let fileURL = self.fileOutputURL else {
             throw FlipBookAssetWriterError.couldNotWriteAsset
         }
-        let writer = try AVAssetWriter(url: fileOutputURL, fileType: .mov)
+        let writer = try AVAssetWriter(url: fileURL, fileType: .mov)
         let settings: [String : Any] = [
             AVVideoCodecKey: AVVideoCodecH264,
             AVVideoWidthKey: size.width,
