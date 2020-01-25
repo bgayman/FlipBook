@@ -101,7 +101,7 @@ public final class FlipBookAssetWriter: NSObject {
     public func createVideoFromCapturedFrames(progress: ((CGFloat) -> Void)?, completion: @escaping (Result<URL, Error>) -> Void) {
         guard frames.isEmpty == false,
               let fileURL = self.fileOutputURL,
-              let buffer = frames[0]?.cgImage?.makePixelBuffer() else {
+              let buffer = frames[0]?.cgI?.makePixelBuffer() else {
             completion(.failure(FlipBookAssetWriterError.noFrames))
             return
         }
@@ -127,7 +127,7 @@ public final class FlipBookAssetWriter: NSObject {
                         }
                         i += 1
                         let time = CMTime(value: CMTimeValue(i), timescale: CMTimeScale(frameRate))
-                        if let buffer = self.frames[index]?.cgImage?.makePixelBuffer() {
+                        if let buffer = self.frames[index]?.cgI?.makePixelBuffer() {
                             guard self.adapter?.append(buffer, withPresentationTime: time) == true else {
                                 let error = writer.error ?? FlipBookAssetWriterError.couldNotWriteAsset
                                 completion(.failure(error))
