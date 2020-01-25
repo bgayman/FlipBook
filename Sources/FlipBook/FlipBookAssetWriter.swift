@@ -152,14 +152,13 @@ public final class FlipBookAssetWriter: NSObject {
     
     /// Function that returns the default file url for the generated video
     private func makeFileOutputURL() -> URL {
-        let cachesDirectory = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.cachesDirectory, FileManager.SearchPathDomainMask.userDomainMask, true)
+        let cachesDirectory: URL = try? FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: true) ?? URL()
         let fileName = "FlipBook.mov"
-        let path  = "\(cachesDirectory)/\(fileName)"
-        let fileManager = FileManager.default
-        if fileManager.fileExists(atPath: path) {
+        cachesDirectory.appendPathComponent(fileName)
+        if fileManager.fileExists(atPath: cachesDirectory.absoluteString) {
             try? fileManager.removeItem(atPath: path)
         }
-        return URL(fileURLWithPath: path)
+        return cachesDirectory
     }
     
     /// Function that returns a configured `AVAssetWriter`
