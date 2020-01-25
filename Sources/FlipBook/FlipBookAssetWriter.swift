@@ -258,6 +258,9 @@ public final class FlipBookAssetWriter: NSObject {
             return
         }
         do {
+            if FileManager.default.fileExists(atPath: fileURL.path) {
+                try FileManager.default.removeItem(atPath: fileURL.path)
+            }
             let writer = try makeWriter()
             guard writer.startWriting() else {
                 completion(.failure(writer.error ?? FlipBookAssetWriterError.couldNotWriteAsset))
