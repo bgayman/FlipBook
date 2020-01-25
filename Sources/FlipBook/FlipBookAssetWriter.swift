@@ -54,7 +54,7 @@ public final class FlipBookAssetWriter: NSObject {
     
     /// The URL for where the video is written
     /// **Default** is `"FlipBook.mov` in caches directory
-    public lazy var fileOutputURL: URL = self.makeFileOutputURL()
+    public lazy var fileOutputURL: URL? = self.makeFileOutputURL()
     
     /// The `Date` for when the recording started
     public var startDate: Date?
@@ -151,7 +151,7 @@ public final class FlipBookAssetWriter: NSObject {
     // MARK: - Private Methods -
     
     /// Function that returns the default file url for the generated video
-    private func makeFileOutputURL() -> URL {
+    private func makeFileOutputURL() -> URL? {
         do {
             var cachesDirectory: URL = try FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
             let fileName = "FlipBook.mov"
@@ -168,6 +168,9 @@ public final class FlipBookAssetWriter: NSObject {
     
     /// Function that returns a configured `AVAssetWriter`
     private func makeWriter() throws -> AVAssetWriter {
+        guard let fileURL = self.fileOutputURL else {
+            throw FlipBookAssetWriterError.couldNotWriteAsset
+        }
         let writer = try AVAssetWriter(url: fileOutputURL, fileType: .mov)
         let settings: [String : Any] = [
             AVVideoCodecKey: AVVideoCodecH264,
