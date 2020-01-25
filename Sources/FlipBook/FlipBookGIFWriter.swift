@@ -83,7 +83,7 @@ public final class FlipBookGIFWriter: NSObject {
                 for index in images.indices {
                     autoreleasepool {
                         let image = images[index]
-                        if let cgImage = image?.cgI {
+                        if let cgImage = image?.cgI?.resize(with: sizeRatio) {
                             CGImageDestinationAddImage(destination, cgImage, imageSettings as CFDictionary)
                         }
                         images[index] = nil
