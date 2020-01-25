@@ -38,6 +38,11 @@ final class FlipBook: NSObject {
     
     #if os(OSX)
     
+    /// Queue for capturing snapshots for view
+    private var queue: DispatchQueue?
+    
+    /// Source for capturing snapshots for view
+    private var source: DispatchSourceTimer?
     #else
 
     /// Display link that drives view snapshotting
@@ -59,7 +64,17 @@ final class FlipBook: NSObject {
         writer.startDate = Date()
         
         #if os(OSX)
-            
+        queue = DispatchQueue.global()
+        source = DispatchSource.makeTimerSource()
+        source?.schedule(deadline: .now(), repeating: 1.0 / Double(self.preferredFramesPerSecond))
+        source?.setEventHandler { [weak self] in
+            guard let self = self else {
+                return
+            }
+            DispatchQueue.main.async {
+                self.tick()
+            }
+        }
         #else
         displayLink = CADisplayLink(target: self, selector: #selector(tick(_:)))
         if #available(iOS 10.0, *) {
@@ -72,7 +87,9 @@ final class FlipBook: NSObject {
     /// Stops recording of view and begins writing frames to video
     public func stop() {
         #if os(OSX)
-        
+        source?.cancel()
+        source = nil
+        queue = nil
         #else
         guard let displayLink = self.displayLink else {
             return
@@ -105,6 +122,12 @@ final class FlipBook: NSObject {
     // MARK: - Private Methods -
     
     #if os(OSX)
+    private func tick() {
+        guard let viewImage = sourceView?.fb_makeViewSnapshot() else {
+            return
+        }
+        writer.writeFrame(viewImage)
+    }
     
     #else
 

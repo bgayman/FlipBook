@@ -12,6 +12,24 @@ extension View {
     var scale: CGFloat {
         window?.backingScaleFactor ?? 1.0
     }
+    
+    func fb_makeViewSnapshot() -> Image? {
+        let wasHidden = isHidden
+        let wantedLayer = wantsLayer
+        
+        isHidden = false
+        wantsLayer = true
+        
+        let image = NSImage(size: bounds.size)
+        image.lockFocus()
+        guard let context: CGContext = NSGraphicsContext.current?.cgContext else { return nil }
+        layer?.presentation()?.render(in: context)
+        image.unlockFocus()
+        
+        wantsLayer = wantedLayer
+        isHidden = wasHidden
+        return image
+    }
 }
 
 #else
