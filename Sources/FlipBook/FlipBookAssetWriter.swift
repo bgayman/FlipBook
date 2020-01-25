@@ -17,7 +17,7 @@ import UIKit
 // MARK: - FlipBookAssetWriter -
 
 /// Wrapper to AVAssetWriter that converts a collection of images to a video
-final class FlipBookAssetWriter: NSObject {
+public final class FlipBookAssetWriter: NSObject {
     
     // MARK: - Types -
     

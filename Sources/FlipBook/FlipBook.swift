@@ -14,7 +14,7 @@ import UIKit
 // MARK: - FlipBook -
 
 /// Class that records a view
-final class FlipBook: NSObject {
+public final class FlipBook: NSObject {
 
     // MARK: - Public Properties
     
