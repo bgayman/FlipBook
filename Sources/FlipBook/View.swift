@@ -19,9 +19,7 @@ extension View {
         
         isHidden = false
         wantsLayer = true
-        
-        let scale = window?.backingScaleFactor ?? 1.0
-        
+                
         let width = Int(bounds.width * scale)
         let height = Int(bounds.height * scale)
         let imageRepresentation = NSBitmapImageRep(bitmapDataPlanes: nil,
@@ -36,7 +34,8 @@ extension View {
                                                    bitsPerPixel: 0)
         imageRepresentation?.size = bounds.size
 
-        guard let imgRep = imageRepresentation, let context = NSGraphicsContext(bitmapImageRep: imgRep) else {
+        guard let imgRep = imageRepresentation,
+              let context = NSGraphicsContext(bitmapImageRep: imgRep) else {
             return nil
         }
 

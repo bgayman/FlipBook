@@ -22,6 +22,10 @@ public final class FlipBook: NSObject {
     /// **Default** 60 frames per second
     public var preferredFramesPerSecond: Int = 60
     
+    /// The asset type to be created
+    /// **Default** `.video`
+    public var assetType: FlipBookAssetWriter.AssetType = .video
+    
     // MARK: - Private Properties -
 
     /// Asset writer used to convert screenshots into video
@@ -31,7 +35,7 @@ public final class FlipBook: NSObject {
     private var onProgress: ((CGFloat) -> Void)?
     
     /// Closure to be called when the video asset stops writing
-    private var onCompletion: ((Result<URL, Error>) -> Void)?
+    private var onCompletion: ((Result<FlipBookAssetWriter.Asset, Error>) -> Void)?
     
     /// View that is currently being recorded
     private var sourceView: View?
@@ -56,7 +60,7 @@ public final class FlipBook: NSObject {
     ///   - view: view to be recorded
     ///   - progress: optional closure that is called with a `CGFloat` representing the progress of video generation. `CGFloat` is in the range `(0.0 ... 1.0)`. `progress` is called from the main thread
     ///   - completion: closure that is called when the video has been created with the `URL` for the created video. `completion` will be called from the main thread
-    public func startRecording(_ view: View, progress: ((CGFloat) -> Void)?, completion: @escaping (Result<URL, Error>) -> Void) {
+    public func startRecording(_ view: View, progress: ((CGFloat) -> Void)?, completion: @escaping (Result<FlipBookAssetWriter.Asset, Error>) -> Void) {
         sourceView = view
         onProgress = progress
         onCompletion = completion
@@ -100,7 +104,7 @@ public final class FlipBook: NSObject {
 
         writer.endDate = Date()
         
-        writer.createVideoFromCapturedFrames(progress: { [weak self] (prog) in
+        writer.createVideoFromCapturedFrames(assetType: assetType, progress: { [weak self] (prog) in
             guard let self = self else {
                 return
             }
