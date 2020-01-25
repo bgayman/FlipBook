@@ -65,7 +65,7 @@ public final class FlipBook: NSObject {
         
         #if os(OSX)
         queue = DispatchQueue.global()
-        source = DispatchSource.makeTimerSource()
+        source = DispatchSource.makeTimerSource(queue: queue)
         source?.schedule(deadline: .now(), repeating: 1.0 / Double(self.preferredFramesPerSecond))
         source?.setEventHandler { [weak self] in
             guard let self = self else {
@@ -75,6 +75,7 @@ public final class FlipBook: NSObject {
                 self.tick()
             }
         }
+        source?.resume()
         #else
         displayLink = CADisplayLink(target: self, selector: #selector(tick(_:)))
         if #available(iOS 10.0, *) {
