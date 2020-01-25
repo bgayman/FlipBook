@@ -141,6 +141,7 @@ public final class FlipBookAssetWriter: NSObject {
                 
                 self.input?.markAsFinished()
                 writer.finishWriting {
+                    self.frames = []
                     completion(.success(fileURL))
                 }
             }
