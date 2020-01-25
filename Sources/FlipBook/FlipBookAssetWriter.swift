@@ -106,6 +106,10 @@ public final class FlipBookAssetWriter: NSObject {
         }
         do {
             let writer = try makeWriter()
+            guard writer.startWriting() else {
+                completion(.failure(writer.error ?? FlipBookAssetWriterError.couldNotWriteAsset))
+                return
+            }
             writer.startSession(atSourceTime: .zero)
             guard adapter?.append(buffer, withPresentationTime: .zero) == true else {
                 completion(.failure(writer.error ?? FlipBookAssetWriterError.couldNotWriteAsset))
@@ -162,7 +166,7 @@ public final class FlipBookAssetWriter: NSObject {
     private func makeWriter() throws -> AVAssetWriter {
         let writer = try AVAssetWriter(url: fileOutputURL, fileType: .mov)
         let settings: [String : Any] = [
-            AVVideoCodecKey: AVVideoCodecH264,
+            AVVideoCodecKey: AVVideoCodecType.h264,
             AVVideoWidthKey: size.width,
             AVVideoHeightKey: size.height
             ]
