@@ -206,8 +206,8 @@ public final class FlipBookAssetWriter: NSObject {
         do {
             var cachesDirectory: URL = try FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
             cachesDirectory.appendPathComponent(fileName)
-            if FileManager.default.fileExists(atPath: cachesDirectory.absoluteString) {
-                try FileManager.default.removeItem(atPath: cachesDirectory.absoluteString)
+            if FileManager.default.fileExists(atPath: cachesDirectory.path) {
+                try FileManager.default.removeItem(atPath: cachesDirectory.path)
             }
             return cachesDirectory
         } catch {
