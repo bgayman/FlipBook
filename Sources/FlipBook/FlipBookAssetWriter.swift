@@ -29,7 +29,7 @@ public final class FlipBookAssetWriter: NSObject {
         case video(URL)
         
         /// Live Photo with its associated `PHLivePhoto`
-        case livePhoto(PHLivePhoto)
+        case livePhoto(PHLivePhoto, LivePhotoResources)
         
         /// Animated gif with its associated `URL`
         case gif(URL)
