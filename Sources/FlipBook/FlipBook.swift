@@ -70,6 +70,7 @@ public final class FlipBook: NSObject {
         writer.size = CGSize(width: view.bounds.size.width * view.scale, height: view.bounds.size.height * view.scale)
         writer.startDate = Date()
         writer.gifImageScale = gifImageScale
+        writer.preferredFramesPerSecond = preferredFramesPerSecond
         
         #if os(OSX)
         queue = DispatchQueue.global()
