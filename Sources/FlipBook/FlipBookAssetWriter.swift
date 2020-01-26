@@ -189,8 +189,8 @@ public final class FlipBookAssetWriter: NSObject {
                         progress?(0.5 + prog * 0.5)
                     }, completion: { result in
                         switch result {
-                        case .success(let livePhoto, _):
-                            completion(.success(.livePhoto(livePhoto)))
+                        case let .success(livePhoto, resources):
+                            completion(.success(.livePhoto(livePhoto, resources)))
                         case .failure(let error):
                             completion(.failure(error))
                         }

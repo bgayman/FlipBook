@@ -182,7 +182,7 @@ final class FlipBookAssetWriterUnitTests: XCTestCase {
                 
             case .success(let asset):
                 switch asset {
-                case .livePhoto(let lp):
+                case let .livePhoto(lp, _):
                     livePhoto = lp
                     expectationLivePhoto.fulfill()
                 case .gif, .video:
