@@ -35,10 +35,10 @@ public final class FlipBookGIFWriter: NSObject {
     /// The file `URL` that the gif is written to
     public let fileOutputURL: URL
     
-    // MARK: - Private Properties -
+    // MARK: - Internal Properties -
     
     /// Queue on which gif writing takes place
-    private static let queue = DispatchQueue(label: "com.FlipBook.gif.writer.queue", attributes: .concurrent)
+    internal static let queue = DispatchQueue(label: "com.FlipBook.gif.writer.queue", attributes: .concurrent)
     
     // MARK: - Init / Deinit -
     
@@ -103,7 +103,7 @@ public final class FlipBookGIFWriter: NSObject {
 
 // MARK: - CGImage + Resize -
 /// Add resizing helper function
-fileprivate extension CGImage {
+internal extension CGImage {
     
     /// Resizes image based on ration to natural size
     /// - Parameter ratio: Ration that represents the size of the image relative to its natural size

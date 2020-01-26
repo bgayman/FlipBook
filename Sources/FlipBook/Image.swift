@@ -11,12 +11,14 @@ public typealias Image = NSImage
 
 extension Image {
     var cgI: CGImage? {
-        var imageRect = CGRect(x: 0, y: 0, width: size.width, height: size.height)
-        return cgImage(forProposedRect: &imageRect, context: nil, hints: nil)
+        return cgImage(forProposedRect: nil, context: nil, hints: nil)
     }
     
     var jpegRep: Data? {
-        guard let bits = self.representations.first as? NSBitmapImageRep else { return nil }
+        guard let cgImage = self.cgI else {
+            return nil
+        }
+        let bits = NSBitmapImageRep(cgImage: cgImage)
         return bits.representation(using: .jpeg, properties: [:])
     }
 }

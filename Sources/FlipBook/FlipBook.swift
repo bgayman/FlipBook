@@ -22,35 +22,38 @@ public final class FlipBook: NSObject {
     /// **Default** 60 frames per second
     public var preferredFramesPerSecond: Int = 60
     
+    /// The amount images in animated gifs should be scaled by. Fullsize gif images can be memory intensive. **Default** `0.5`
+    public var gifImageScale: Float = 0.5
+    
     /// The asset type to be created
     /// **Default** `.video`
     public var assetType: FlipBookAssetWriter.AssetType = .video
     
-    // MARK: - Private Properties -
+    // MARK: - Internal Properties -
 
     /// Asset writer used to convert screenshots into video
-    private let writer = FlipBookAssetWriter()
+    internal let writer = FlipBookAssetWriter()
     
     /// Closure to be called when the asset writing has progressed
-    private var onProgress: ((CGFloat) -> Void)?
+    internal var onProgress: ((CGFloat) -> Void)?
     
     /// Closure to be called when the video asset stops writing
-    private var onCompletion: ((Result<FlipBookAssetWriter.Asset, Error>) -> Void)?
+    internal var onCompletion: ((Result<FlipBookAssetWriter.Asset, Error>) -> Void)?
     
     /// View that is currently being recorded
-    private var sourceView: View?
+    internal var sourceView: View?
     
     #if os(OSX)
     
     /// Queue for capturing snapshots for view
-    private var queue: DispatchQueue?
+    internal var queue: DispatchQueue?
     
     /// Source for capturing snapshots for view
-    private var source: DispatchSourceTimer?
+    internal var source: DispatchSourceTimer?
     #else
 
     /// Display link that drives view snapshotting
-    private var displayLink: CADisplayLink?
+    internal var displayLink: CADisplayLink?
     #endif
     
     // MARK: - Public Methods -
@@ -66,6 +69,7 @@ public final class FlipBook: NSObject {
         onCompletion = completion
         writer.size = CGSize(width: view.bounds.size.width * view.scale, height: view.bounds.size.height * view.scale)
         writer.startDate = Date()
+        writer.gifImageScale = gifImageScale
         
         #if os(OSX)
         queue = DispatchQueue.global()
@@ -123,10 +127,10 @@ public final class FlipBook: NSObject {
         })
     }
     
-    // MARK: - Private Methods -
+    // MARK: - Internal Methods -
     
     #if os(OSX)
-    private func tick() {
+    internal func tick() {
         guard let viewImage = sourceView?.fb_makeViewSnapshot() else {
             return
         }
@@ -135,7 +139,7 @@ public final class FlipBook: NSObject {
     
     #else
 
-    @objc private func tick(_ displayLink: CADisplayLink) {
+    @objc internal func tick(_ displayLink: CADisplayLink) {
         guard let viewImage = sourceView?.fb_makeViewSnapshot() else {
             return
         }

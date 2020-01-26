@@ -57,7 +57,7 @@ public typealias View = UIView
 extension View {
     
     var scale: CGFloat {
-        Screen.main.scale ?? 1.0
+        Screen.main.scale
     }
     
     func fb_makeViewSnapshot() -> Image? {

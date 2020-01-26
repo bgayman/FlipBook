@@ -35,9 +35,14 @@ public final class FlipBookLivePhotoWriter: NSObject {
     
     /// Errors that `FlipBookLivePhotoWriter` can throw
     public enum FlipBookLivePhotoWriterError: Error {
+        
+        /// Unable to write to cache directory
         case couldNotWriteToDirectory
+        
+        /// Could not find video track
         case couldNotAccessVideoTrack
-        case livePhotoDegraded
+        
+        /// An unknown error occured
         case unknownError
     }
     
@@ -46,19 +51,19 @@ public final class FlipBookLivePhotoWriter: NSObject {
     // MARK: - Private Properties -
     
     /// Queue on which Live Photo writing takes place
-    static private let queue = DispatchQueue(label: "com.FlipBook.live.photo.writer.queue", attributes: .concurrent)
+    static internal let queue = DispatchQueue(label: "com.FlipBook.live.photo.writer.queue", attributes: .concurrent)
     
     /// `URL` to location in caches directory where files will be written to
-    lazy private var cacheDirectory: URL? = self.makeCacheDirectoryURL()
+    lazy internal var cacheDirectory: URL? = self.makeCacheDirectoryURL()
     
     /// Asset reader for audio track
-    private var audioReader: AVAssetReader?
+    internal var audioReader: AVAssetReader?
     
     /// Asset reader for video track
-    private var videoReader: AVAssetReader?
+    internal var videoReader: AVAssetReader?
     
     /// Asset writer for Live Photo
-    private var assetWriter: AVAssetWriter?
+    internal var assetWriter: AVAssetWriter?
     
     // MARK: - Init / Deinit -
     
@@ -74,7 +79,10 @@ public final class FlipBookLivePhotoWriter: NSObject {
     ///   - videoURL: The `URL`of the video fo the Live Photo
     ///   - progress: Closure that is called when progress is made on creating Live Photo. Called from the main thread.
     ///   - completion: Closure call when the Live Photo has finished being created. Called from the main thread.
-    public func makeLivePhoto(from imageURL: URL?, videoURL: URL, progress: ((CGFloat) -> Void)?, completion: @escaping (Result<(PHLivePhoto, LivePhotoResources), Error>) -> Void) {
+    public func makeLivePhoto(from imageURL: URL?,
+                              videoURL: URL,
+                              progress: ((CGFloat) -> Void)?,
+                              completion: @escaping (Result<(PHLivePhoto, LivePhotoResources), Error>) -> Void) {
         Self.queue.async { [weak self] in
             guard let self = self else { return }
             self.make(from: imageURL, videoURL: videoURL, progress: progress, completion: completion)
@@ -85,13 +93,14 @@ public final class FlipBookLivePhotoWriter: NSObject {
     /// - Parameters:
     ///   - livePhoto: The Live Photo to be decomposed
     ///   - completion: Closure  called with the resources are seporated and saved. Called on the main thread.
-    public func extractResources(_ livePhoto: PHLivePhoto, completion: @escaping (Result<LivePhotoResources, Error>) -> Void) {
+    public func extractResources(_ livePhoto: PHLivePhoto,
+                                 completion: @escaping (Result<LivePhotoResources, Error>) -> Void) {
         Self.queue.async {
             self.extractResources(from: livePhoto, completion: completion)
         }
     }
     
-    /// Saves a `LivePhotoResources` to photo library as a Live Photo. **You must request permission to modify photo library before attempting to save**
+    /// Saves a `LivePhotoResources` to photo library as a Live Photo. **You must request permission to modify photo library before attempting to save as well as add "Privacy - Photo Library Usage Description" key to your app's info.plist**
     /// - Parameters:
     ///   - resources: The resources of the Live Photo to be saved
     ///   - completion: Closure called after the resources have been saved. Called on the main thread
@@ -120,7 +129,10 @@ public final class FlipBookLivePhotoWriter: NSObject {
     ///   - videoURL: The `URL`of the video fo the Live Photo
     ///   - progress: Closure that is called when progress is made on creating Live Photo. Called from the main thread.
     ///   - completion: Closure call when the Live Photo has finished being created. Called from the main thread.
-    private func make(from imageURL: URL?, videoURL: URL, progress: ((CGFloat) -> Void)?, completion: @escaping (Result<(PHLivePhoto, LivePhotoResources), Error>) -> Void) {
+    internal func make(from imageURL: URL?,
+                       videoURL: URL,
+                       progress: ((CGFloat) -> Void)?,
+                       completion: @escaping (Result<(PHLivePhoto, LivePhotoResources), Error>) -> Void) {
         guard let cacheDirectory = self.cacheDirectory else {
             DispatchQueue.main.async { completion(.failure(FlipBookLivePhotoWriterError.couldNotWriteToDirectory)) }
             return
@@ -160,7 +172,11 @@ public final class FlipBookLivePhotoWriter: NSObject {
     ///   - destination: Where the asset with the added identifier should be written
     ///   - progress: Closure that calls back with progress of writing. Called from background thread.
     ///   - completion: Closure called when video with asset identifier has been written. Called from background thread.
-    private func add(_ assetIdentifier: String, to videoURL: URL, saveTo destination: URL, progress: ((CGFloat) -> Void)?, completion: @escaping (Result<URL, Error>) -> Void) {
+    internal func add(_ assetIdentifier: String,
+                     to videoURL: URL,
+                     saveTo destination: URL,
+                     progress: ((CGFloat) -> Void)?,
+                     completion: @escaping (Result<URL, Error>) -> Void) {
         
         var audioWriterInput: AVAssetWriterInput?
         var audioReaderOutput: AVAssetReaderOutput?
@@ -266,7 +282,7 @@ public final class FlipBookLivePhotoWriter: NSObject {
                         if let sampleBuffer = videoReaderOutput.copyNextSampleBuffer() {
                             currentFrameCount += 1
                             let percent = CGFloat(currentFrameCount) / CGFloat(frameCount)
-                            progress?(percent)
+                            DispatchQueue.main.async { progress?(percent) }
                             if videoWriterInput.append(sampleBuffer) == false {
                                 self.videoReader?.cancelReading()
                                 completion(.failure(self.assetWriter?.error ?? FlipBookLivePhotoWriterError.unknownError))
@@ -309,7 +325,7 @@ public final class FlipBookLivePhotoWriter: NSObject {
     /// - Parameters:
     ///   - livePhoto: The Live Photo to be decomposed
     ///   - completion: Closure  called with the resources are seporated and saved
-    private func extractResources(from livePhoto: PHLivePhoto, completion: @escaping (Result<LivePhotoResources, Error>) -> Void) {
+    internal func extractResources(from livePhoto: PHLivePhoto, completion: @escaping (Result<LivePhotoResources, Error>) -> Void) {
         guard let url = cacheDirectory else {
             DispatchQueue.main.async {
                 completion(.failure(FlipBookLivePhotoWriterError.couldNotWriteToDirectory))
@@ -324,7 +340,7 @@ public final class FlipBookLivePhotoWriter: NSObject {
     ///   - livePhoto: The Live Photo to be decomposed
     ///   - directoryURL: The `URL` of the directory to save the seporated resources
     ///   - completion: Closure  called with the resources are seporated and saved
-    private func extractResources(from livePhoto: PHLivePhoto, to directoryURL: URL, completion: @escaping (Result<LivePhotoResources, Error>) -> Void) {
+    internal func extractResources(from livePhoto: PHLivePhoto, to directoryURL: URL, completion: @escaping (Result<LivePhotoResources, Error>) -> Void) {
         let assetResources = PHAssetResource.assetResources(for: livePhoto)
         let group = DispatchGroup()
         var keyPhotoURL: URL?
@@ -355,14 +371,14 @@ public final class FlipBookLivePhotoWriter: NSObject {
                 }
                 group.leave()
             })
-            group.notify(queue: .main) {
-                if let result = result {
-                    completion(result)
-                } else if let pairedPhotoURL = keyPhotoURL, let pairedVideoURL = videoURL {
-                    completion(.success(LivePhotoResources(imageURL: pairedPhotoURL, videoURL: pairedVideoURL)))
-                } else {
-                    completion(.failure(FlipBookLivePhotoWriterError.unknownError))
-                }
+        }
+        group.notify(queue: .main) {
+            if let result = result {
+                completion(result)
+            } else if let pairedPhotoURL = keyPhotoURL, let pairedVideoURL = videoURL {
+                completion(.success(LivePhotoResources(imageURL: pairedPhotoURL, videoURL: pairedVideoURL)))
+            } else {
+                completion(.failure(FlipBookLivePhotoWriterError.unknownError))
             }
         }
     }
@@ -372,7 +388,7 @@ public final class FlipBookLivePhotoWriter: NSObject {
     ///   - resource: The resource to be saved
     ///   - directory: The directory in which the resource should be saved
     ///   - resourceData: The data that the resource is composed of
-    private func save(_ resource: PHAssetResource, to directory: URL, resourceData: Data) throws -> URL? {
+    internal func save(_ resource: PHAssetResource, to directory: URL, resourceData: Data) throws -> URL? {
         let fileExtension = UTTypeCopyPreferredTagWithClass(resource.uniformTypeIdentifier as CFString,
                                                             kUTTagClassFilenameExtension)?.takeRetainedValue()
         
@@ -392,7 +408,7 @@ public final class FlipBookLivePhotoWriter: NSObject {
     ///   - assetIdentifier: The asset identifier to be added
     ///   - imageURL: The `URL` where the image is currently
     ///   - saveTo: The `URL` where the image should be written to
-    private func add(_ assetIdentifier: String, toImage imageURL: URL, saveTo destinationURL: URL) -> URL? {
+    internal func add(_ assetIdentifier: String, toImage imageURL: URL, saveTo destinationURL: URL) -> URL? {
         guard let imageDestination = CGImageDestinationCreateWithURL(destinationURL as CFURL, kUTTypeJPEG, 1, nil),
               let imageSource = CGImageSourceCreateWithURL(imageURL as CFURL, nil),
               var imageProperties = CGImageSourceCopyPropertiesAtIndex(imageSource, 0, nil) as? [AnyHashable: Any] else {
@@ -408,7 +424,7 @@ public final class FlipBookLivePhotoWriter: NSObject {
     
     /// Makes an `AVMetadataItem` for a given asset identifier
     /// - Parameter assetIdentifier: the asset identifier to be enclosed in the metadata item
-    private func makeMetadata(for assetIdentifier: String) -> AVMetadataItem {
+    internal func makeMetadata(for assetIdentifier: String) -> AVMetadataItem {
         let item = AVMutableMetadataItem()
         let keyContentIdentifier =  "com.apple.quicktime.content.identifier"
         let keySpaceQuickTimeMetadata = "mdta"
@@ -420,7 +436,7 @@ public final class FlipBookLivePhotoWriter: NSObject {
     }
     
     /// Makes an `AVAssetWriterInputMetadataAdaptor` for the still image time
-    private func makeMetadataAdaptorForStillImageTime() -> AVAssetWriterInputMetadataAdaptor {
+    internal func makeMetadataAdaptorForStillImageTime() -> AVAssetWriterInputMetadataAdaptor {
         let keyStillImageTime = "com.apple.quicktime.still-image-time"
         let keySpaceQuickTimeMetadata = "mdta"
         let spec: NSDictionary = [
@@ -439,7 +455,7 @@ public final class FlipBookLivePhotoWriter: NSObject {
     }
     
     /// Makes an `AVMetadataItem` for a still image time
-    private func makeMetadataItemForStillImageTime() -> AVMetadataItem {
+    internal func makeMetadataItemForStillImageTime() -> AVMetadataItem {
         let item = AVMutableMetadataItem()
         let keyStillImageTime = "com.apple.quicktime.still-image-time"
         let keySpaceQuickTimeMetadata = "mdta"
@@ -450,24 +466,9 @@ public final class FlipBookLivePhotoWriter: NSObject {
         return item
     }
     
-    /// Makes `URL` "FlipBook-LivePhoto" to directory in caches directory
-    private func makeCacheDirectoryURL() -> URL? {
-        do {
-            let cacheDirectoryURL = try FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
-            let fullDirectory = cacheDirectoryURL.appendingPathComponent("FlipBook-LivePhoto", isDirectory: true)
-            if !FileManager.default.fileExists(atPath: fullDirectory.absoluteString) {
-                try FileManager.default.createDirectory(at: fullDirectory, withIntermediateDirectories: true, attributes: nil)
-            }
-            return fullDirectory
-        } catch {
-            print(error)
-            return nil
-        }
-    }
-    
     /// Makes a still image at the 50% mark of a video
     /// - Parameter videoURL: The `URL` of the video to make the still image from
-    private func makeKeyPhoto(from videoURL: URL) throws -> URL? {
+    internal func makeKeyPhoto(from videoURL: URL) throws -> URL? {
         var percent: Float = 0.5
         let videoAsset = AVURLAsset(url: videoURL)
         if let stillImageTime = videoAsset.getStillImageTime() {
@@ -482,8 +483,23 @@ public final class FlipBookLivePhotoWriter: NSObject {
         return url
     }
     
+    /// Makes `URL` "FlipBook-LivePhoto" to directory in caches directory
+    internal func makeCacheDirectoryURL() -> URL? {
+        do {
+            let cacheDirectoryURL = try FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
+            let fullDirectory = cacheDirectoryURL.appendingPathComponent("FlipBook-LivePhoto", isDirectory: true)
+            if !FileManager.default.fileExists(atPath: fullDirectory.absoluteString) {
+                try FileManager.default.createDirectory(at: fullDirectory, withIntermediateDirectories: true, attributes: nil)
+            }
+            return fullDirectory
+        } catch {
+            print(error)
+            return nil
+        }
+    }
+    
     /// Removes "FlipBook-LivePhoto" from caches directory
-    private func clearCache() {
+    internal func clearCache() {
         guard let url = cacheDirectory else { return }
         try? FileManager.default.removeItem(at: url)
     }
@@ -492,7 +508,7 @@ public final class FlipBookLivePhotoWriter: NSObject {
 // MARK: - AVAsset + Live Photo -
 
 /// Collection of helper functions for getting asset frames and stills
-fileprivate extension AVAsset {
+internal extension AVAsset {
     
     /// Returns the number a frames for the first video track
     /// - Parameter exact: if `true` counts every frame. If `false` uses the `nominalFrameRate` of the video track to determine the number of frames

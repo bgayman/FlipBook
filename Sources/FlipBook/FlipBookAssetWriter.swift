@@ -36,7 +36,7 @@ public final class FlipBookAssetWriter: NSObject {
     }
     
     /// Enum that represents the different types of assets that can be created
-    public enum AssetType {
+    public enum AssetType: Equatable {
         
         /// `AssetType` that represents a conversion to an `.mov` video
         case video
@@ -46,6 +46,15 @@ public final class FlipBookAssetWriter: NSObject {
         
         /// `AssetType` that represents a conversion to an animated `.gif`
         case gif
+        
+        public static func == (lhs: AssetType, rhs: AssetType) -> Bool {
+            switch (lhs, rhs) {
+            case (.video, .video): return true
+            case (.gif, .gif): return true
+            case let (.livePhoto(imgLHS), .livePhoto(imgRHS)): return imgLHS == imgRHS
+            default: return false
+            }
+        }
     }
     
     /// Errors that can `FlipBookAssetWriter` might throw
@@ -95,25 +104,25 @@ public final class FlipBookAssetWriter: NSObject {
     /// The amount images in animated gifs should be scaled by. Fullsize gif images can be memory intensive. **Default** `0.5`
     public var gifImageScale: Float = 0.5
     
-    // MARK: - Private Properties -
+    // MARK: - Internal Properties -
     
     /// The images that compose the frames of the final video
-    private var frames = [Image?]()
+    internal var frames = [Image?]()
     
     /// The queue on which video asset writing is done
-    private let queue = DispatchQueue(label: "com.FlipBook.asset.writer.queue")
+    internal let queue = DispatchQueue(label: "com.FlipBook.asset.writer.queue")
     
     /// The writer input for the asset writer
-    private var input: AVAssetWriterInput?
+    internal var input: AVAssetWriterInput?
     
     /// The input pixel buffer adaptor for the asset writer
-    private var adapter: AVAssetWriterInputPixelBufferAdaptor?
+    internal var adapter: AVAssetWriterInputPixelBufferAdaptor?
     
     /// The writer used for making gifs
-    private lazy var gifWriter = FlipBookGIFWriter(fileOutputURL: self.makeFileOutputURL(fileName: "FlipBook.gif"))
+    internal lazy var gifWriter = FlipBookGIFWriter(fileOutputURL: self.makeFileOutputURL(fileName: "FlipBook.gif"))
     
     /// The writer used for making Live Photos
-    private lazy var livePhotoWriter = FlipBookLivePhotoWriter()
+    internal lazy var livePhotoWriter = FlipBookLivePhotoWriter()
     
     // MARK: - Public Methods -
     
@@ -129,7 +138,10 @@ public final class FlipBookAssetWriter: NSObject {
     ///   - assetType: determines what type of asset is created. **Default** is video.
     ///   - progress: closure that is called with a `CGFloat` representing the progress of video generation. `CGFloat` is in the range `(0.0 ... 1.0)`. `progress` will be called from a background thread
     ///   - completion: closure that is called when the video has been created with the `URL` for the created video. `completion` will be called from a background thread
-    public func createAsset(from images: [Image], assetType: AssetType = .video,  progress: ((CGFloat) -> Void)?, completion: @escaping (Result<Asset, Error>) -> Void) {
+    public func createAsset(from images: [Image],
+                            assetType: AssetType = .video,
+                            progress: ((CGFloat) -> Void)?,
+                            completion: @escaping (Result<Asset, Error>) -> Void) {
         frames = images
         createVideoFromCapturedFrames(assetType: assetType, progress: progress, completion: completion)
     }
@@ -204,10 +216,10 @@ public final class FlipBookAssetWriter: NSObject {
         }
     }
         
-    // MARK: - Private Methods -
+    // MARK: - Internal Methods -
     
     /// Function that returns the default file url for the generated video
-    private func makeFileOutputURL(fileName: String = "FlipBook.mov") -> URL? {
+    internal func makeFileOutputURL(fileName: String = "FlipBook.mov") -> URL? {
         do {
             var cachesDirectory: URL = try FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
             cachesDirectory.appendPathComponent(fileName)
@@ -222,7 +234,7 @@ public final class FlipBookAssetWriter: NSObject {
     }
     
     /// Function that returns a configured `AVAssetWriter`
-    private func makeWriter() throws -> AVAssetWriter {
+    internal func makeWriter() throws -> AVAssetWriter {
         guard let fileURL = self.fileOutputURL else {
             throw FlipBookAssetWriterError.couldNotWriteAsset
         }
@@ -250,14 +262,16 @@ public final class FlipBookAssetWriter: NSObject {
             kCVPixelBufferHeightKey as String: size.height
         ]
         
-        adapter = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: input!, sourcePixelBufferAttributes: attributes)
         
-        writer.add(input!)
+        if let inp = self.input {
+            adapter = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: inp, sourcePixelBufferAttributes: attributes)
+            writer.add(inp)
+        }
         input?.expectsMediaDataInRealTime = true
         return writer
     }
     
-    private func writeVideo(progress: ((CGFloat) -> Void)?, completion: @escaping (Result<URL, Error>) -> Void) {
+    internal func writeVideo(progress: ((CGFloat) -> Void)?, completion: @escaping (Result<URL, Error>) -> Void) {
         guard let fileURL = self.fileOutputURL else {
             completion(.failure(FlipBookAssetWriterError.couldNotWriteAsset))
             return
@@ -307,13 +321,13 @@ public final class FlipBookAssetWriter: NSObject {
     }
     
     /// Helper function that calculates the frame rate if `startDate` and `endDate` are set. Otherwise it returns `preferredFramesPerSecond`
-    private func makeFrameRate() -> Int {
+    internal func makeFrameRate() -> Int {
         let startTimeDiff = startDate?.timeIntervalSinceNow ?? 0
         let endTimeDiff = endDate?.timeIntervalSinceNow ?? 0
         let diff = endTimeDiff - startTimeDiff
         let frameRate: Int
         if diff != 0 {
-            frameRate = Int(Double(frames.count) / diff)
+            frameRate = Int(Double(frames.count) / diff + 0.5)
         } else {
             frameRate = preferredFramesPerSecond
         }
@@ -324,7 +338,7 @@ public final class FlipBookAssetWriter: NSObject {
 // MARK: - CGImage + CVPixelBuffer -
 
 /// Adds helper functions for converting from `CGImage` to `CVPixelBuffer`
-private extension CGImage {
+internal extension CGImage {
   
     /// Creates  and returns a pixel buffer for the image
     func makePixelBuffer() -> CVPixelBuffer? {
