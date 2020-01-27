@@ -143,6 +143,10 @@ It is important to also be mindful of sensitive user information and data; don't
 - Not all `CALayer` animations and effects are captured.
 - On macOS make sure `NSView` has `wantsLayer` is set to `true`
 
+## Examples of Generated Assets
+
+You can find a gallery of generated assets [here](https://bradgayman/FlipBook/)
+
 ## Contact
 
 Brad Gayman
