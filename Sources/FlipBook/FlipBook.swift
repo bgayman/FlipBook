@@ -15,6 +15,15 @@ import UIKit
 
 /// Class that records a view
 public final class FlipBook: NSObject {
+    
+    // MARK: - Types -
+    
+    /// Enum that represents the errors that `FlipBook` can throw
+    public enum FlipBookError: String, Error {
+        
+        /// Recording is already in progress. Stop current recording before beginning another.
+        case recordingInProgress
+    }
 
     // MARK: - Public Properties
     
@@ -64,6 +73,17 @@ public final class FlipBook: NSObject {
     ///   - progress: optional closure that is called with a `CGFloat` representing the progress of video generation. `CGFloat` is in the range `(0.0 ... 1.0)`. `progress` is called from the main thread
     ///   - completion: closure that is called when the video has been created with the `URL` for the created video. `completion` will be called from the main thread
     public func startRecording(_ view: View, progress: ((CGFloat) -> Void)?, completion: @escaping (Result<FlipBookAssetWriter.Asset, Error>) -> Void) {
+        #if os(OSX)
+        guard queue == nil else {
+            completion(.failure(FlipBookError.recordingInProgress))
+            return
+        }
+        #else
+        guard displayLink == nil else {
+            completion(.failure(FlipBookError.recordingInProgress))
+            return
+        }
+        #endif
         sourceView = view
         onProgress = progress
         onCompletion = completion
@@ -124,8 +144,8 @@ public final class FlipBook: NSObject {
             DispatchQueue.main.async {
                 self.writer.startDate = nil
                 self.writer.endDate = nil
-                self.onCompletion?(result)
                 self.onProgress = nil
+                self.onCompletion?(result)
                 self.onCompletion = nil
             }
         })
