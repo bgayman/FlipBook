@@ -131,7 +131,7 @@ public final class FlipBook: NSObject {
         })
     }
     
-    /// Makes an asset of type `self.assetType` from a an array of images with a framerate equal to `self.preferredFramesPerSecond`. The asset will have a size equal to the first image's size.
+    /// Makes an asset of type `assetType` from a an array of images with a framerate equal to `preferredFramesPerSecond`. The asset will have a size equal to the first image's size.
     /// - Parameters:
     ///   - images: The array of images
     ///   - progress: Closure called when progress is made. Called on the main thread.
@@ -146,6 +146,14 @@ public final class FlipBook: NSObject {
         }, completion: { result in
             DispatchQueue.main.async { completion(result) }
         })
+    }
+    
+    /// Saves a `LivePhotoResources` to photo library as a Live Photo. **You must request permission to modify photo library before attempting to save as well as add "Privacy - Photo Library Usage Description" key to your app's info.plist**
+    /// - Parameters:
+    ///   - resources: The resources of the Live Photo to be saved
+    ///   - completion: Closure called after the resources have been saved. Called on the main thread.
+    public func saveToLibrary(_ resources: LivePhotoResources, completion: @escaping (Result<Bool, Error>) -> Void) {
+        writer.livePhotoWriter.saveToLibrary(resources, completion: completion)
     }
     
     // MARK: - Internal Methods -
