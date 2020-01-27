@@ -36,11 +36,11 @@ Use Xcode's built in integration with Swift Package Manager.
 
 Begin by creating an instance of `FlipBook` and setting the `assetType` desired. You'll next start the recording by calling `start`, passing in the view you wish to record, an optional progress closure that will be called when asset creation progress has been made, and a completion closure that will return either the asset when you're done. To stop the recording, call `stop()` which will trigger the asset creation to begin. For example:
 
-```
+```swift
 import UIKit
 import FlipBook
 
-class ViewController: UIViewController
+class ViewController: UIViewController {
     // Hold a refrence to `flipBook` otherwise it will go out of scope
     let flipBook = FlipBook()
     @IBOutlet weak var myAnimatingView: UIView!
@@ -84,3 +84,5 @@ class ViewController: UIViewController
     }
     
     private func animateMyAnimatingView(_ completion: () -> Void) { ... }
+}
+```
