@@ -26,7 +26,8 @@ Use Xcode's built in integration with Swift Package Manager.
 
 - Open Xcode
 - Click File -> Swift Packages -> Add Package Dependency
-- In modal that says "Choose Package Repository" paste https://github.com/bgayman/FlipBook.git
+- In modal that says "Choose Package Repository" paste https://github.com/bgayman/FlipBook.git and press return
+- Select version range you desire (default selection works well)
 - Xcode will add the package to your project
 - Any file where you want to use FlipBook add `import FlipBook`
 
@@ -86,3 +87,4 @@ class ViewController: UIViewController {
     private func animateMyAnimatingView(_ completion: () -> Void) { ... }
 }
 ```
+You can checkout a complete [iOS example](https://github.com/bgayman/FlipBookExampleiOS) and [macOS example](https://github.com/bgayman/FlipBookExamplemacOS).
