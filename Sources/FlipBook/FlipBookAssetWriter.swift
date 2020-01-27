@@ -201,11 +201,15 @@ public final class FlipBookAssetWriter: NSObject {
             })
 
         case .gif:
-            gifWriter?.makeGIF(frames.compactMap { $0 },
-                               delay: CGFloat(1.0) / CGFloat(preferredFramesPerSecond),
-                               sizeRatio: gifImageScale,
-                               progress: progress,
-                               completion: { (result) in
+            guard let gWriter = self.gifWriter else {
+                completion(.failure(FlipBookAssetWriterError.couldNotWriteAsset))
+                return
+            }
+            gWriter.makeGIF(frames.compactMap { $0 },
+                            delay: CGFloat(1.0) / CGFloat(preferredFramesPerSecond),
+                            sizeRatio: gifImageScale,
+                            progress: progress,
+                            completion: { (result) in
                                 switch result {
                                 case .success(let url):
                                     completion(.success(.gif(url)))

@@ -108,6 +108,7 @@ public final class FlipBook: NSObject {
         #endif
 
         writer.endDate = Date()
+        sourceView = nil
         
         writer.createVideoFromCapturedFrames(assetType: assetType, progress: { [weak self] (prog) in
             guard let self = self else {
@@ -121,10 +122,29 @@ public final class FlipBook: NSObject {
                 return
             }
             DispatchQueue.main.async {
+                self.writer.startDate = nil
+                self.writer.endDate = nil
                 self.onCompletion?(result)
                 self.onProgress = nil
                 self.onCompletion = nil
             }
+        })
+    }
+    
+    /// Makes an asset of type `self.assetType` from a an array of images with a framerate equal to `self.preferredFramesPerSecond`. The asset will have a size equal to the first image's size.
+    /// - Parameters:
+    ///   - images: The array of images
+    ///   - progress: Closure called when progress is made. Called on the main thread.
+    ///   - completion: Closure called when the asset has finished being created. Called on the main thread.
+    public func makeAsset(from images: [Image], progress: ((CGFloat) -> Void)?, completion: @escaping (Result<FlipBookAssetWriter.Asset, Error>) -> Void) {
+        writer.frames = images
+        writer.preferredFramesPerSecond = preferredFramesPerSecond
+        let firstCGImage = images.first?.cgI
+        writer.size = CGSize(width: firstCGImage?.width ?? 0, height: firstCGImage?.height ?? 0)
+        writer.createVideoFromCapturedFrames(assetType: assetType, progress: { (prog) in
+            DispatchQueue.main.async { progress?(prog) }
+        }, completion: { result in
+            DispatchQueue.main.async { completion(result) }
         })
     }
     
