@@ -29,7 +29,7 @@ Use Xcode's built in integration with Swift Package Manager.
 - In modal that says "Choose Package Repository" paste https://github.com/bgayman/FlipBook.git and press return
 - Select version range you desire (default selection works well)
 - Xcode will add the package to your project
-- Any file where you want to use FlipBook add `import FlipBook`
+- In any file where you want to use FlipBook add `import FlipBook`
 
 ## Usage
 
@@ -37,7 +37,7 @@ The main object of the package is the `FlipBook` object. With it, you can record
 
 ### Recording a View
 
-Begin by creating an instance of `FlipBook` and setting the `assetType` desired. You'll next start the recording by calling `start`, passing in the view you wish to record, an optional progress closure that will be called when asset creation progress has been made, and a completion closure that will return either the asset when you're done. To stop the recording, call `stop()` which will trigger the asset creation to begin. For example:
+Begin by creating an instance of `FlipBook` and setting the `assetType` to desired. You'll next start the recording by calling `start`, passing in the view you wish to record, an optional progress closure that will be called when asset creation progress has been made, and a completion closure that will return the asset when you're done. To stop the recording, call `stop()` which will trigger the asset creation to begin. For example:
 
 ```swift
 import UIKit
@@ -89,7 +89,7 @@ class ViewController: UIViewController {
     private func animateMyAnimatingView(_ completion: () -> Void) { ... }
 }
 ```
-You can checkout a complete [iOS example](https://github.com/bgayman/FlipBookExampleiOS) and [macOS example](https://github.com/bgayman/FlipBookExamplemacOS). On macOS, remember to set `wantsLayer` to `true` as FlipBook depends on rendering `CALayer`s for snapshoting 
+You can checkout a complete [iOS example](https://github.com/bgayman/FlipBookExampleiOS) and [macOS example](https://github.com/bgayman/FlipBookExamplemacOS). On macOS, remember to set `wantsLayer` to `true` as FlipBook depends on rendering `CALayer`s for snapshoting.
 
 ### Creating an Asset from Images
 
@@ -133,9 +133,9 @@ class ViewController: UIViewController {
 
 FlipBook is a great way to capture view animations and interactions or to compose a video, gif, or Live Photo from a loose collection of images. It's great for targeting just a portion of the screen or window. And for creating not just videos, but also animated gifs and Live Photos.
 
-However, it is likely not the best choice for recording long user sessions or when performance is being pushed to the limits. For those situations [`ReplayKit`](https://developer.apple.com/documentation/replaykit) is likely a better solution. Also if system audio is import, FlipBook does not current capture any audio whatsoever while `ReplayKit` does. 
+However, it is likely not the best choice for recording long user sessions or when performance is being pushed to the limits. For those situations [`ReplayKit`](https://developer.apple.com/documentation/replaykit) is likely a better solution. Also if system audio is important, FlipBook does not current capture any audio whatsoever while `ReplayKit` does. 
 
-It is import to also be mindful of sensitive user information and data; don't record screens that might have information a user wouldn't want recorded.
+It is important to also be mindful of sensitive user information and data; don't record screens that might have information a user wouldn't want recorded.
 
 ## Known Issues
 
