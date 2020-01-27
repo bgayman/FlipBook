@@ -89,7 +89,7 @@ class ViewController: UIViewController {
     private func animateMyAnimatingView(_ completion: () -> Void) { ... }
 }
 ```
-You can checkout a complete [iOS example](https://github.com/bgayman/FlipBookExampleiOS) and [macOS example](https://github.com/bgayman/FlipBookExamplemacOS). On macOS, remember to set `wantsLayer` to `true` as FlipBook depends on rendering `CALayer`s for snapshoting.
+You can checkout a complete [iOS example](https://github.com/bgayman/FlipBookExampleiOS) and [macOS example](https://github.com/bgayman/FlipBookExamplemacOS). On macOS, remember to set `wantsLayer` to `true` as FlipBook depends on rendering `CALayer`s for snapshotting.
 
 ### Creating an Asset from Images
 
