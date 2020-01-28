@@ -154,7 +154,9 @@ Brad Gayman
 
 [@bgayman](https://twitter.com/bgayman)
 
-## Attribution
+## Attributions
+
+Inspirations taken from:
 
 - [Glimpse](https://github.com/wess/Glimpse)
 - [Live Photo Demo](https://github.com/genadyo/LivePhotoDemo)
