@@ -143,6 +143,7 @@ It is important to also be mindful of sensitive user information and data; don't
 - Not all `CALayer` animations and effects are captured.
 - `UIView.transition`s don't capture animation.
 - On macOS make sure `NSView` has `wantsLayer` is set to `true`
+- With SwiftUI, the use of `View` and `Image` might be confusing. FlipBook uses `View` and `Image` to typealias between AppKit and UIKit.
 
 ## Examples of Generated Assets
 
