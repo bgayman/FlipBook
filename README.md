@@ -141,6 +141,7 @@ It is important to also be mindful of sensitive user information and data; don't
 
 - Memory pressure when creating GIFs. GIF creation with large images or large views at a high framerate will cause the device to quickly run out of memory. 
 - Not all `CALayer` animations and effects are captured.
+- `UIView.transition`s don't capture animation.
 - On macOS make sure `NSView` has `wantsLayer` is set to `true`
 
 ## Examples of Generated Assets
