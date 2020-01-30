@@ -155,7 +155,7 @@ class ViewController: UIViewController {
         // Get the scale of the screen that we capturing on as we'll want to apply the scale when animating for the composition
         let scale = view.window?.screen.scale ?? 1.0
         
-        // Start recording when we appear, here we're recording view that will act as the background for our layer animation
+        // Start recording when we appear, here we're recording a view that will act as the background for our layer animation
         flipBook.startRecording(myBackgroundView, compositionAnimation: { layer in
         
             // create a gradient layer
@@ -255,7 +255,7 @@ Brad Gayman
 
 ## Attributions
 
-Inspirations taken from:
+Inspiration taken from:
 
 - [Glimpse](https://github.com/wess/Glimpse)
 - [Live Photo Demo](https://github.com/genadyo/LivePhotoDemo)
