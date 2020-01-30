@@ -502,8 +502,6 @@ public final class FlipBookAssetWriter: NSObject {
         }
         let duration = videoTrack.timeRange.duration.seconds
         imageGenerator.appliesPreferredTrackTransform = true
-        imageGenerator.requestedTimeToleranceBefore = .zero
-        imageGenerator.requestedTimeToleranceAfter = .zero
         let numFrames = Int(duration * Double(preferredFramesPerSecond) + 0.5)
         let times: [NSValue] = (0 ..< numFrames).map { CMTime(value: CMTimeValue($0), timescale: 100) }.map { NSValue(time: $0) }
         let totalCount = times.count
