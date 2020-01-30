@@ -9,6 +9,7 @@ import AVFoundation
 import CoreGraphics
 import VideoToolbox
 import Photos
+import CoreImage
 #if os(OSX)
 import AppKit
 #else
@@ -126,6 +127,9 @@ public final class FlipBookAssetWriter: NSObject {
     
     /// The video editor used for making core animation compositions
     internal lazy var coreAnimationVideoEditor = FlipBookCoreAnimationVideoEditor()
+    
+    /// The core image context
+    internal lazy var ciContext = CIContext()
     
     // MARK: - Public Methods -
     
@@ -306,31 +310,33 @@ public final class FlipBookAssetWriter: NSObject {
                             case .success(let url):
                                 
                                 // Get the frames
-                                self.makeFrames(from: url, progress: { (prog) in
-                                    progress?(0.50 + prog * 0.25)
-                                }, completion: { [weak self] images in
-                                    guard images.isEmpty == false,
-                                          let self = self,
-                                          let gWriter = self.gifWriter,
-                                          self.preferredFramesPerSecond > 0 else {
-                                        completion(.failure(FlipBookAssetWriterError.unknownError))
-                                        return
-                                    }
-                                    
-                                    // Make the gif
-                                    gWriter.makeGIF(images.map(Image.makeImage),
-                                                    delay: CGFloat(1.0) / CGFloat(self.preferredFramesPerSecond),
-                                                    sizeRatio: self.gifImageScale,
-                                                    progress: { prog in progress?(0.75 + prog * 0.25) },
-                                                    completion: { result in
-                                                        switch result {
-                                                        case .success(let url):
-                                                            completion(.success(.gif(url)))
-                                                        case .failure(let error):
-                                                            completion(.failure(error))
-                                                        }
+                                DispatchQueue.global().async {
+                                    self.makeFrames(from: url, progress: { (prog) in
+                                        progress?(0.50 + prog * 0.25)
+                                    }, completion: { [weak self] images in
+                                        guard images.isEmpty == false,
+                                              let self = self,
+                                              let gWriter = self.gifWriter,
+                                              self.preferredFramesPerSecond > 0 else {
+                                            completion(.failure(FlipBookAssetWriterError.unknownError))
+                                            return
+                                        }
+                                        
+                                        // Make the gif
+                                        gWriter.makeGIF(images.map(Image.makeImage),
+                                                        delay: CGFloat(1.0) / CGFloat(self.preferredFramesPerSecond),
+                                                        sizeRatio: self.gifImageScale,
+                                                        progress: { prog in progress?(0.75 + prog * 0.25) },
+                                                        completion: { result in
+                                                            switch result {
+                                                            case .success(let url):
+                                                                completion(.success(.gif(url)))
+                                                            case .failure(let error):
+                                                                completion(.failure(error))
+                                                            }
+                                        })
                                     })
-                                })
+                                }
                             case .failure(let error):
                                 completion(.failure(error))
                             }
@@ -495,29 +501,33 @@ public final class FlipBookAssetWriter: NSObject {
     ///   - completion: A closure called when image generation is complete. Called from a background thread.
     internal func makeFrames(from videoURL: URL, progress: ((CGFloat) -> Void)?, completion: @escaping ([CGImage]) -> Void) {
         let asset = AVURLAsset(url: videoURL)
-        let imageGenerator = AVAssetImageGenerator(asset: asset)
-        guard let videoTrack = asset.tracks(withMediaType: .video).first else {
+        guard let videoTrack = asset.tracks(withMediaType: .video).first, let videoReader = try? AVAssetReader(asset: asset) else {
             completion([])
             return
         }
+        
+        let videoReaderSettings = [
+            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA as NSNumber
+        ]
+        let videoReaderOutput = AVAssetReaderTrackOutput(track: videoTrack, outputSettings: videoReaderSettings)
+        videoReader.add(videoReaderOutput)
         let duration = videoTrack.timeRange.duration.seconds
-        imageGenerator.appliesPreferredTrackTransform = true
-        let numFrames = Int(duration * Double(preferredFramesPerSecond) + 0.5)
-        let times: [NSValue] = (0 ..< numFrames).map { CMTime(value: CMTimeValue($0), timescale: 100) }.map { NSValue(time: $0) }
-        let totalCount = times.count
-        var currentCount = 0
-        let imageCache = ImageCache()
-        imageGenerator.generateCGImagesAsynchronously(forTimes: times) { (_, cgImage, time, _, _) in
-            currentCount += 1
-            progress?(CGFloat(currentCount) / CGFloat(totalCount))
-            if let cgImage = cgImage {
-                imageCache[time] = cgImage
+        let frameCount = Int(duration * Double(videoTrack.nominalFrameRate) + 0.5)
+        var currentFrameCount = 0
+        if videoReader.startReading() {
+            var sampleBuffers = [CMSampleBuffer]()
+            while let sampleBuffer = videoReaderOutput.copyNextSampleBuffer() {
+                currentFrameCount += 1
+                sampleBuffers.append(sampleBuffer)
+                progress?(CGFloat(currentFrameCount) / CGFloat(frameCount))
             }
-            if currentCount == totalCount {
-                let keys = imageCache.storage.keys.sorted()
-                let images = keys.compactMap { imageCache[$0] }
-                completion(images)
-            }
+            let cgImages = sampleBuffers
+                .compactMap { CMSampleBufferGetImageBuffer($0) }
+                .map { CIImage(cvImageBuffer: $0) }
+                .compactMap { ciContext.createCGImage($0, from: $0.extent) }
+            completion(cgImages)
+        } else {
+            completion([])
         }
     }
 }

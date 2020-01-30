@@ -18,11 +18,22 @@ public final class FlipBookCoreAnimationVideoEditor {
     
     // MARK: - Types -
     
+    /// Errors that can `FlipBookCoreAnimationVideoEditor` might throw
     enum FlipBookCoreAnimationVideoEditorError: String, Error {
+        
+        /// Compositing was cancelled
         case cancelled
+        
+        /// The composition could not be created
         case couldNotCreateComposition
+        
+        /// The export session could not be created
         case couldNotCreateExportSession
+        
+        /// The output URL could not be created
         case couldNotCreateOutputURL
+        
+        /// An unknown error occured
         case unknown
     }
     
@@ -39,6 +50,12 @@ public final class FlipBookCoreAnimationVideoEditor {
     
     // MARK: - Public Methods -
     
+    /// Makes a new video composition from a video and core animation animation
+    /// - Parameters:
+    ///   - videoURL: The `URL` of the video that the core animation animation should be composited with
+    ///   - animation: Closure for adding `AVVideoCompositionCoreAnimationTool` composition animations. Add `CALayer`s as sublayers to the passed in `CALayer`. Then trigger animations with a `beginTime` of `AVCoreAnimationBeginTimeAtZero`. *Reminder that `CALayer` origin for `AVVideoCompositionCoreAnimationTool` is lower left  for `UIKit` setting `isGeometryFlipped = true is suggested* **Default is `nil`**
+    ///   - progress: Optional closure that is called with a `CGFloat` representing the progress of composit generation. `CGFloat` is in the range `(0.0 ... 1.0)`. `progress` will be called from a main thread
+    ///   - completion: Closure that is called when the video composit has been created with the `URL` for the created video. `completion` will be called from a main thread
     public func makeVideo(fromVideoAt videoURL: URL,
                           animation: @escaping (CALayer) -> Void,
                           progress: ((CGFloat) -> Void)?,
@@ -153,6 +170,8 @@ public final class FlipBookCoreAnimationVideoEditor {
     
     //MARK: - Internal Methods -
     
+    /// Function that determines the orientation and whether a rectangle is in "Portrait" from a transform
+    /// - Parameter transform: The transform of the rectangle
     internal func orientation(from transform: CGAffineTransform) -> (orientation: CGImagePropertyOrientation, isPortrait: Bool) {
         var assetOrientation = CGImagePropertyOrientation.up
         var isPortrait = false
@@ -171,6 +190,10 @@ public final class FlipBookCoreAnimationVideoEditor {
         return (assetOrientation, isPortrait)
     }
     
+    /// Function that makes the composition instruction for a given composition track from a given asset track
+    /// - Parameters:
+    ///   - track: The track of the composition
+    ///   - assetTrack: The track of the asset
     internal func compositionLayerInstruction(for track: AVCompositionTrack, assetTrack: AVAssetTrack) -> AVMutableVideoCompositionLayerInstruction {
         let instruction = AVMutableVideoCompositionLayerInstruction(assetTrack: track)
         let transform = assetTrack.preferredTransform
