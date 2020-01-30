@@ -130,6 +130,7 @@ public final class FlipBookCoreAnimationVideoEditor {
                     self?.source = nil
                 }
             }
+            source?.resume()
         }
           
         export.exportAsynchronously {
