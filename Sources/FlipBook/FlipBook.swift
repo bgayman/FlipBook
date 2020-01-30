@@ -137,7 +137,9 @@ public final class FlipBook: NSObject {
         writer.endDate = Date()
         sourceView = nil
         
-        writer.createVideoFromCapturedFrames(assetType: assetType, progress: { [weak self] (prog) in
+        writer.createVideoFromCapturedFrames(assetType: assetType,
+                                             compositionAnimation: compositionAnimation,
+        progress: { [weak self] (prog) in
             guard let self = self else {
                 return
             }
