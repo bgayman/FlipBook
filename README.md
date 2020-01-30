@@ -131,7 +131,7 @@ class ViewController: UIViewController {
 
 ## Advanced Usage 
 
-FlipBook will work for most view animations and interactions however many `CoreAnimation` animations and effects will not work with the simple start and stop method described above. However, there is an optional `animationComposition` closure of type `((CALayer) -> Void)?` that will allow you composit `CALayer` animations and effects with a FlipBook video using the `AVVideoCompositionCoreAnimationTool`. For example:
+FlipBook will work for most view animations and interactions however many `CoreAnimation` animations and effects will not work with the simple start and stop method described above. However, there is an optional `animationComposition` closure of type `((CALayer) -> Void)?` that will allow you to composite `CALayer` animations and effects with a FlipBook video using the `AVVideoCompositionCoreAnimationTool`. For example:
 
 ```swift
 import UIKit
@@ -221,7 +221,7 @@ class ViewController: UIViewController {
 
 ```
 
-Generating a gif you should get something like:
+Generating a gif with the code above you should get something like:
 
 ![Animated gif of gradient layer composition](https://bradgayman.com/FlipBook/assets/layerGradient.gif)
 
