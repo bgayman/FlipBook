@@ -46,6 +46,9 @@ public final class FlipBook: NSObject {
     /// Closure to be called when the asset writing has progressed
     internal var onProgress: ((CGFloat) -> Void)?
     
+    /// Closure to be called when compositing video with `CAAnimation`s
+    internal var compositionAnimation: ((CALayer) -> Void)?
+    
     /// Closure to be called when the video asset stops writing
     internal var onCompletion: ((Result<FlipBookAssetWriter.Asset, Error>) -> Void)?
     
@@ -70,9 +73,13 @@ public final class FlipBook: NSObject {
     /// Starts recording a view
     /// - Parameters:
     ///   - view: view to be recorded
+    ///   - compositionAnimation: optional closure for adding `AVVideoCompositionCoreAnimationTool` composition animations. Add `CALayer`s as sublayers to the passed in `CALayer`. Then trigger animations with a `beginTime` of `AVCoreAnimationBeginTimeAtZero`. *Reminder that `CALayer` origin for `AVVideoCompositionCoreAnimationTool` is lower left  for `UIKit` setting `isGeometryFlipped = true is suggested* **Default is `nil`**
     ///   - progress: optional closure that is called with a `CGFloat` representing the progress of video generation. `CGFloat` is in the range `(0.0 ... 1.0)`. `progress` is called from the main thread
     ///   - completion: closure that is called when the video has been created with the `URL` for the created video. `completion` will be called from the main thread
-    public func startRecording(_ view: View, progress: ((CGFloat) -> Void)?, completion: @escaping (Result<FlipBookAssetWriter.Asset, Error>) -> Void) {
+    public func startRecording(_ view: View,
+                               compositionAnimation: ((CALayer) -> Void)? = nil,
+                               progress: ((CGFloat) -> Void)?,
+                               completion: @escaping (Result<FlipBookAssetWriter.Asset, Error>) -> Void) {
         #if os(OSX)
         guard queue == nil else {
             completion(.failure(FlipBookError.recordingInProgress))
@@ -154,9 +161,13 @@ public final class FlipBook: NSObject {
     /// Makes an asset of type `assetType` from a an array of images with a framerate equal to `preferredFramesPerSecond`. The asset will have a size equal to the first image's size.
     /// - Parameters:
     ///   - images: The array of images
+    ///   - compositionAnimation: optional closure for adding `AVVideoCompositionCoreAnimationTool` composition animations. Add `CALayer`s as sublayers to the passed in `CALayer`. Then trigger animations with a `beginTime` of `AVCoreAnimationBeginTimeAtZero`. *Reminder that `CALayer` origin for `AVVideoCompositionCoreAnimationTool` is lower left  for `UIKit` setting `isGeometryFlipped = true is suggested* **Default is `nil`**
     ///   - progress: Closure called when progress is made. Called on the main thread.
     ///   - completion: Closure called when the asset has finished being created. Called on the main thread.
-    public func makeAsset(from images: [Image], progress: ((CGFloat) -> Void)?, completion: @escaping (Result<FlipBookAssetWriter.Asset, Error>) -> Void) {
+    public func makeAsset(from images: [Image],
+                          compositionAnimation: ((CALayer) -> Void)? = nil,
+                          progress: ((CGFloat) -> Void)?,
+                          completion: @escaping (Result<FlipBookAssetWriter.Asset, Error>) -> Void) {
         writer.frames = images
         writer.preferredFramesPerSecond = preferredFramesPerSecond
         let firstCGImage = images.first?.cgI

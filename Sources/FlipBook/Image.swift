@@ -21,6 +21,10 @@ extension Image {
         let bits = NSBitmapImageRep(cgImage: cgImage)
         return bits.representation(using: .jpeg, properties: [:])
     }
+    
+    static func makeImage(cgImage: CGImage) -> Image {
+        return NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
+    }
 }
 
 #else
@@ -33,6 +37,10 @@ extension Image {
     
     var jpegRep: Data? {
         jpegData(compressionQuality: 1.0)
+    }
+    
+    static func makeImage(cgImage: CGImage) -> Image {
+        return UIImage(cgImage: cgImage)
     }
 }
 

@@ -124,6 +124,9 @@ public final class FlipBookAssetWriter: NSObject {
     /// The writer used for making Live Photos
     internal lazy var livePhotoWriter = FlipBookLivePhotoWriter()
     
+    /// The video editor used for making core animation compositions
+    internal lazy var coreAnimationVideoEditor = FlipBookCoreAnimationVideoEditor()
+    
     // MARK: - Public Methods -
     
     /// Appends image to collection images to be written to video
@@ -136,48 +139,86 @@ public final class FlipBookAssetWriter: NSObject {
     /// - Parameters:
     ///   - images: images that comprise the video
     ///   - assetType: determines what type of asset is created. **Default** is video.
+    ///   - compositionAnimation: optional closure for adding `AVVideoCompositionCoreAnimationTool` composition animations. Add `CALayer`s as sublayers to the passed in `CALayer`. Then trigger animations with a `beginTime` of `AVCoreAnimationBeginTimeAtZero`. *Reminder that `CALayer` origin for `AVVideoCompositionCoreAnimationTool` is lower left  for `UIKit` setting `isGeometryFlipped = true is suggested* **Default is `nil`**
     ///   - progress: closure that is called with a `CGFloat` representing the progress of video generation. `CGFloat` is in the range `(0.0 ... 1.0)`. `progress` will be called from a background thread
     ///   - completion: closure that is called when the video has been created with the `URL` for the created video. `completion` will be called from a background thread
     public func createAsset(from images: [Image],
                             assetType: AssetType = .video,
+                            compositionAnimation: ((CALayer) -> Void)? = nil,
                             progress: ((CGFloat) -> Void)?,
                             completion: @escaping (Result<Asset, Error>) -> Void) {
         frames = images
-        createVideoFromCapturedFrames(assetType: assetType, progress: progress, completion: completion)
+        createVideoFromCapturedFrames(assetType: assetType, compositionAnimation: compositionAnimation, progress: progress, completion: completion)
     }
     
     /// Makes asset from the images added using `writeFrame(_ image: Image)`
     /// - Parameters:
+    ///   - assetType: determines what type of asset is created. **Default** is video.
+    ///   - compositionAnimation: optional closure for adding `AVVideoCompositionCoreAnimationTool` composition animations. Add `CALayer`s as sublayers to the passed in `CALayer`. Then trigger animations with a `beginTime` of `AVCoreAnimationBeginTimeAtZero`. *Reminder that `CALayer` origin for `AVVideoCompositionCoreAnimationTool` is lower left  for `UIKit` setting `isGeometryFlipped = true is suggested* **Default is `nil`**
     ///   - progress: closure that is called with a `CGFloat` representing the progress of video generation. `CGFloat` is in the range `(0.0 ... 1.0)`. `progress` will be called from a background thread
     ///   - completion: closure that is called when the video has been created with the `URL` for the created video. `completion` will be called from a background thread
-    public func createVideoFromCapturedFrames(assetType: AssetType = .video, progress: ((CGFloat) -> Void)?, completion: @escaping (Result<Asset, Error>) -> Void) {
+    public func createVideoFromCapturedFrames(assetType: AssetType = .video,
+                                              compositionAnimation: ((CALayer) -> Void)? = nil,
+                                              progress: ((CGFloat) -> Void)?,
+                                              completion: @escaping (Result<Asset, Error>) -> Void) {
         guard frames.isEmpty == false else {
             completion(.failure(FlipBookAssetWriterError.noFrames))
             return
         }
         switch assetType {
 
+        // Handle Video
         case .video:
-            writeVideo(progress: progress, completion: { result in
+            
+            // Begin by writing the video
+            writeVideo(progress: { prog in
+                let scale: CGFloat = compositionAnimation == nil ? 1.0 : 0.5
+                progress?(prog * scale)
+            }, completion: { [weak self] result in
                 switch result {
                 case .success(let url):
-                    completion(.success(.video(url)))
+                    
+                    // If we have to do a composition do that
+                    if let compositionAnimation = compositionAnimation {
+                        self?.coreAnimationVideoEditor.preferredFramesPerSecond = self?.preferredFramesPerSecond ?? 60
+                        self?.coreAnimationVideoEditor.makeVideo(fromVideoAt: url, animation: compositionAnimation, progress: { (prog) in
+                            progress?(0.5 + prog * 0.5)
+                        }, completion: { result in
+                            // Handle the composition result
+                            switch result {
+                            case .success(let url):
+                                completion(.success(.video(url)))
+                            case .failure(let error):
+                                completion(.failure(error))
+                            }
+                        })
+                    } else {
+
+                        // No composition return the video
+                        completion(.success(.video(url)))
+                    }
                 case .failure(let error):
                     completion(.failure(error))
                 }
             })
 
+        // Handle Live Photo
         case .livePhoto(let img):
             let image: Image? = img ?? frames[0]
             let imageURL: URL?
+        
+            // Make image URL for still aspect of Live Photo
             if let jpgData = image?.jpegRep, let url = makeFileOutputURL(fileName: "img.jpg") {
                 try? jpgData.write(to: url, options: [.atomic])
                 imageURL = url
             } else {
                 imageURL = nil
             }
+            
+            // Write the video
             writeVideo(progress: { (prog) in
-                progress?(prog * 0.5)
+                let scale: CGFloat = compositionAnimation == nil ? 0.5 : 0.333333
+                progress?(prog * scale)
             }, completion: { [weak self] result in
                 guard let self = self else {
                     completion(.failure(FlipBookAssetWriterError.unknownError))
@@ -185,38 +226,143 @@ public final class FlipBookAssetWriter: NSObject {
                 }
                 switch result {
                 case .success(let url):
-                    self.livePhotoWriter.makeLivePhoto(from: imageURL, videoURL: url, progress: { (prog) in
-                        progress?(0.5 + prog * 0.5)
-                    }, completion: { result in
-                        switch result {
-                        case let .success(livePhoto, resources):
-                            completion(.success(.livePhoto(livePhoto, resources)))
-                        case .failure(let error):
-                            completion(.failure(error))
-                        }
-                    })
+                    
+                    // If we have a composition make that
+                    if let composition = compositionAnimation {
+                        self.coreAnimationVideoEditor.preferredFramesPerSecond = self.preferredFramesPerSecond
+                        self.coreAnimationVideoEditor.makeVideo(fromVideoAt: url, animation: composition, progress: { (prog) in
+                            progress?(0.333333 + prog * 0.333333)
+                        }, completion: { [weak self] result in
+                            switch result {
+                            case .success(let url):
+                                
+                                // Composition finished make Live Photo from image and video
+                                self?.livePhotoWriter.makeLivePhoto(from: imageURL, videoURL: url, progress: { (prog) in
+                                    progress?(0.66666666 + prog * 0.333333)
+                                }, completion: { result in
+                                    
+                                    // Handle Live Photo result
+                                    switch result {
+                                    case let .success(livePhoto, resources):
+                                        completion(.success(.livePhoto(livePhoto, resources)))
+                                    case .failure(let error):
+                                        completion(.failure(error))
+                                    }
+                                })
+                            case .failure(let error):
+                                completion(.failure(error))
+                            }
+                        })
+                    } else {
+                        
+                        // No composition make Live Photo from video and image
+                        self.livePhotoWriter.makeLivePhoto(from: imageURL, videoURL: url, progress: { (prog) in
+                            progress?(0.5 + prog * 0.5)
+                        }, completion: { result in
+                            
+                            // Handle Live Photo result
+                            switch result {
+                            case let .success(livePhoto, resources):
+                                completion(.success(.livePhoto(livePhoto, resources)))
+                            case .failure(let error):
+                                completion(.failure(error))
+                            }
+                        })
+                    }
                 case .failure(let error):
                     completion(.failure(error))
                 }
             })
 
+        // Handle GIF
         case .gif:
             guard let gWriter = self.gifWriter else {
                 completion(.failure(FlipBookAssetWriterError.couldNotWriteAsset))
                 return
             }
-            gWriter.makeGIF(frames.compactMap { $0 },
-                            delay: CGFloat(1.0) / CGFloat(preferredFramesPerSecond),
-                            sizeRatio: gifImageScale,
-                            progress: progress,
-                            completion: { (result) in
-                                switch result {
-                                case .success(let url):
-                                    completion(.success(.gif(url)))
-                                case .failure(let error):
-                                    completion(.failure(error))
-                                }
-            })
+            if let composition = compositionAnimation {
+                coreAnimationVideoEditor.preferredFramesPerSecond = preferredFramesPerSecond
+                
+                // Write video
+                writeVideo(progress: { (prog) in
+                    progress?(prog * 0.25)
+                }, completion: { [weak self] result in
+                    guard let self = self else {
+                        completion(.failure(FlipBookAssetWriterError.unknownError))
+                        return
+                    }
+                    switch result {
+                    case .success(let url):
+                        
+                        // Add composition
+                        self.coreAnimationVideoEditor.makeVideo(fromVideoAt: url, animation: composition, progress: { (prog) in
+                            progress?(0.25 + prog * 0.25)
+                        }, completion: { [weak self] result in
+                            guard let self = self else {
+                                completion(.failure(FlipBookAssetWriterError.unknownError))
+                                return
+                            }
+                            switch result {
+                            case .success(let url):
+                                
+                                // Get the frames
+                                self.makeFrames(from: url, progress: { (prog) in
+                                    progress?(0.50 + prog * 0.25)
+                                }, completion: { [weak self] images in
+                                    guard images.isEmpty == false,
+                                          let self = self,
+                                          let gWriter = self.gifWriter,
+                                          self.preferredFramesPerSecond > 0 else {
+                                        completion(.failure(FlipBookAssetWriterError.unknownError))
+                                        return
+                                    }
+                                    
+                                    // Make the gif
+                                    gWriter.makeGIF(images.map(Image.makeImage),
+                                                    delay: CGFloat(1.0) / CGFloat(self.preferredFramesPerSecond),
+                                                    sizeRatio: self.gifImageScale,
+                                                    progress: { prog in progress?(0.75 + prog * 0.25) },
+                                                    completion: { result in
+                                                        switch result {
+                                                        case .success(let url):
+                                                            completion(.success(.gif(url)))
+                                                        case .failure(let error):
+                                                            completion(.failure(error))
+                                                        }
+                                    })
+                                })
+                            case .failure(let error):
+                                completion(.failure(error))
+                            }
+                        })
+                    case .failure(let error):
+                        completion(.failure(error))
+                    }
+                })
+                
+            } else {
+                
+                // No composition so make GIF directly
+                
+                // Make sure preferredFramesPerSecond is greater than 0
+                guard preferredFramesPerSecond > 0 else {
+                    completion(.failure(FlipBookAssetWriterError.couldNotWriteAsset))
+                    return
+                }
+                gWriter.makeGIF(frames.compactMap { $0 },
+                                delay: CGFloat(1.0) / CGFloat(preferredFramesPerSecond),
+                                sizeRatio: gifImageScale,
+                                progress: progress,
+                                completion: { (result) in
+                                    switch result {
+                                    case .success(let url):
+                                        completion(.success(.gif(url)))
+                                    case .failure(let error):
+                                        completion(.failure(error))
+                                    }
+                })
+            }
+            
         }
     }
         
@@ -275,6 +421,10 @@ public final class FlipBookAssetWriter: NSObject {
         return writer
     }
     
+    /// Writes `frames` to video
+    /// - Parameters:
+    ///   - progress: Closure called when progress is made writing video. Called from background thread.
+    ///   - completion: Closure called when video is done writing. Called from background thread.
     internal func writeVideo(progress: ((CGFloat) -> Void)?, completion: @escaping (Result<URL, Error>) -> Void) {
         guard let fileURL = self.fileOutputURL else {
             completion(.failure(FlipBookAssetWriterError.couldNotWriteAsset))
@@ -336,6 +486,41 @@ public final class FlipBookAssetWriter: NSObject {
             frameRate = preferredFramesPerSecond
         }
         return frameRate
+    }
+    
+    /// Gets frames as `CGImage` from a video asset
+    /// - Parameters:
+    ///   - videoURL: The `URL` where the video is located
+    ///   - progress: A closure that is called when image generator makes progress. Called from a background thread.
+    ///   - completion: A closure called when image generation is complete. Called from a background thread.
+    internal func makeFrames(from videoURL: URL, progress: ((CGFloat) -> Void)?, completion: @escaping ([CGImage]) -> Void) {
+        let asset = AVURLAsset(url: videoURL)
+        let imageGenerator = AVAssetImageGenerator(asset: asset)
+        guard let videoTrack = asset.tracks(withMediaType: .video).first else {
+            completion([])
+            return
+        }
+        let duration = videoTrack.timeRange.duration.seconds
+        imageGenerator.appliesPreferredTrackTransform = true
+        imageGenerator.requestedTimeToleranceBefore = .zero
+        imageGenerator.requestedTimeToleranceAfter = .zero
+        let numFrames = Int(duration * Double(preferredFramesPerSecond) + 0.5)
+        let times: [NSValue] = (0 ..< numFrames).map { CMTime(value: CMTimeValue($0), timescale: 100) }.map { NSValue(time: $0) }
+        let totalCount = times.count
+        var currentCount = 0
+        let imageCache = ImageCache()
+        imageGenerator.generateCGImagesAsynchronously(forTimes: times) { (_, cgImage, time, _, _) in
+            currentCount += 1
+            progress?(CGFloat(currentCount) / CGFloat(totalCount))
+            if let cgImage = cgImage {
+                imageCache[time] = cgImage
+            }
+            if currentCount == totalCount {
+                let keys = imageCache.storage.keys.sorted()
+                let images = keys.compactMap { imageCache[$0] }
+                completion(images)
+            }
+        }
     }
 }
 
@@ -401,5 +586,43 @@ internal extension CGImage {
 
         context.draw(self, in: CGRect(x: 0, y: 0, width: width, height: height))
         return pixelBuffer
+    }
+}
+
+// MARK: - ImageCache -
+
+/// Thread safe image cache
+internal final class ImageCache {
+
+    /// Queue for performing reads and writes to storage dictionary
+    internal let queue = DispatchQueue(label: "ImageCacheQueue")
+    
+    /// Dictionary that holds images
+    internal var storage: [CMTime: CGImage] = [:]
+    
+    /// Why of accessing storage directly through subscript
+    internal subscript(key: CMTime) -> CGImage? {
+        get {
+            return queue.sync {
+                return storage[key]
+            }
+        }
+        set {
+            queue.sync {
+                storage[key] = newValue
+                
+            }
+        }
+    }
+}
+
+// MARK: - CMTime + Hashable -
+
+/// Add conformance to `Hashable` to `CMTime`
+extension CMTime: Hashable {
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(self.value)
+        hasher.combine(self.timescale)
     }
 }
