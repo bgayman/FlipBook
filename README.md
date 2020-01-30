@@ -129,6 +129,104 @@ class ViewController: UIViewController {
 }
 ```
 
+## Advanced Usage 
+
+FlipBook will work for most view animations and interactions however many `CoreAnimation` animations and effects will not work with the simple start and stop method described above. However, there is an optional `animationComposition` closure of type `((CALayer) -> Void)?` that will allow you composit `CALayer` animations and effects with a FlipBook video using the `AVVideoCompositionCoreAnimationTool`. For example:
+
+```swift
+import UIKit
+import FlipBook
+
+class ViewController: UIViewController {
+    // Hold a refrence to `flipBook` otherwise it will go out of scope
+    let flipBook = FlipBook()
+    @IBOutlet weak var myBackgroundView: UIView!
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        // Set the assetType we want to create
+        flipBook.assetType = .video
+    }
+    
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated: animated)
+        
+        // Get the scale of the screen that we capturing on as we'll want to apply the scale when animating for the composition
+        let scale = view.window?.screen.scale ?? 1.0
+        
+        // Start recording when we appear, here we're recording view that will act as the background for our layer animation
+        flipBook.startRecording(myBackgroundView, compositionAnimation: { layer in
+        
+            // create a gradient layer
+            let gradientLayer = CAGradientLayer()
+            gradientLayer.frame = layer.bounds
+            gradientLayer.colors = [UIColor.systemRed.cgColor, UIColor.systemBlue.cgColor]
+            gradientLayer.locations = [0.0, 1.0]
+            gradientLayer.startPoint = CGPoint.zero
+            gradientLayer.endPoint = CGPoint(x: 1.0, y: 1.0)
+            
+            // create a shape layer
+            let shapeLayer = CAShapeLayer()
+            shapeLayer.frame = layer.bounds
+            
+            // remember that layer composition is in pixels not points so scale up
+            shapeLayer.lineWidth = 10.0 * scale
+            shapeLayer.lineCap = .round
+            shapeLayer.fillColor = UIColor.clear.cgColor
+            shapeLayer.strokeColor = UIColor.black.cgColor
+            shapeLayer.path = UIBezierPath(ovalIn: layer.bounds.insetBy(dx: 150 * scale, dy: 150 * scale)).cgPath
+            shapeLayer.strokeEnd = 0.0
+            gradientLayer.mask = shapeLayer
+            
+            layer.addSublayer(gradientLayer)
+            
+            let strokeAnimation = CABasicAnimation(keyPath: "strokeEnd")
+            strokeAnimation.fromValue = 0.0
+            strokeAnimation.toValue = 1.0
+            strokeAnimation.duration = 8.0
+            
+            // must start the animation at `AVCoreAnimationBeginTimeAtZero`
+            strokeAnimation.beginTime = AVCoreAnimationBeginTimeAtZero
+            strokeAnimation.isRemovedOnCompletion = false
+            strokeAnimation.fillMode = .forwards
+            shapeLayer.add(strokeAnimation, forKey: "strokeAnimation")
+            
+        }, progress: nil, completion: { [weak self] result in
+            
+            // Switch on result
+            switch result {
+            case .success(let asset):
+                // Switch on the asset that's returned
+                switch asset {
+                case .video(let url):
+                    // Do something with the video
+                    
+                // We expect a video so do nothing for .livePhoto and .gif
+                case .livePhoto, .gif:
+                    break
+                }
+            case .failure(let error):
+                // Handle error in recording
+                print(error)
+            }
+        })
+        
+        // After 9 seconds stop recording. We'll have 8 seconds of animation and 1 second of final state
+        DispatchQueue.main.asyncAfter(deadline: .now() + 9.0) {
+            self.flipBook.stop()
+        }
+    }
+}
+
+```
+
+Generating a gif you should get something like:
+
+![Animated gif of gradient layer composition](https://bradgayman.com/FlipBook/assets/layerGradient.gif)
+
+Where the card view is the background view recorded by FlipBook and the gradient stroke is the layer composited on top of the recording. Remember that `AVVideoCompositionCoreAnimationTool` has an origin in the lower left, not top left like `UIKit`.
+
 ## When to Use
 
 FlipBook is a great way to capture view animations and interactions or to compose a video, gif, or Live Photo from a loose collection of images. It's great for targeting just a portion of the screen or window. And for creating not just videos, but also animated gifs and Live Photos.
@@ -140,7 +238,7 @@ It is important to also be mindful of sensitive user information and data; don't
 ## Known Issues
 
 - Memory pressure when creating GIFs. GIF creation with large images or large views at a high framerate will cause the device to quickly run out of memory. 
-- Not all `CALayer` animations and effects are captured.
+- Not all `CALayer` animations and effects are captured (see "Advance Usage").
 - `UIView.transition`s don't capture animation.
 - On macOS make sure `NSView` has `wantsLayer` is set to `true`
 - With SwiftUI, the use of `View` and `Image` might be confusing. FlipBook uses `View` and `Image` to typealias between AppKit and UIKit.
@@ -161,6 +259,7 @@ Inspirations taken from:
 
 - [Glimpse](https://github.com/wess/Glimpse)
 - [Live Photo Demo](https://github.com/genadyo/LivePhotoDemo)
+- [AVFoundation Tutorial: Adding Overlays and Animations to Videos](https://www.raywenderlich.com/6236502-avfoundation-tutorial-adding-overlays-and-animations-to-videos)
 
 ## License
 
