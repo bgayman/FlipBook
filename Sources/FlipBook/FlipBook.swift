@@ -94,6 +94,7 @@ public final class FlipBook: NSObject {
         sourceView = view
         onProgress = progress
         onCompletion = completion
+        self.compositionAnimation = compositionAnimation
         writer.size = CGSize(width: view.bounds.size.width * view.scale, height: view.bounds.size.height * view.scale)
         writer.startDate = Date()
         writer.gifImageScale = gifImageScale
