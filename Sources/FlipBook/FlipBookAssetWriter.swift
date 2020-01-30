@@ -453,7 +453,6 @@ public final class FlipBookAssetWriter: NSObject {
                 for index in self.frames.indices {
                     autoreleasepool {
                         while self.input?.isReadyForMoreMediaData == false {
-                            print("Not ready for more data")
                         }
                         let time = CMTime(value: CMTimeValue(i), timescale: CMTimeScale(frameRate))
                         if let buffer = self.frames[index]?.cgI?.makePixelBuffer() {
