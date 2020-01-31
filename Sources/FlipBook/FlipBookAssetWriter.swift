@@ -34,6 +34,33 @@ public final class FlipBookAssetWriter: NSObject {
         
         /// Animated gif with its associated `URL`
         case gif(URL)
+        
+        /// The url of a video or animated gif. If the asset is a live photo `assetURL` is `nil`
+        public var assetURL: URL? {
+            switch self {
+            case .video(let url): return url
+            case .livePhoto: return nil
+            case .gif(let url): return url
+            }
+        }
+        
+        /// The Live Photo of a live photo asset. If the asset is a gif or video `livePhoto` is `nil`
+        public var livePhoto: PHLivePhoto? {
+            switch self {
+            case .video: return nil
+            case .livePhoto(let lp, _): return lp
+            case .gif: return nil
+            }
+        }
+        
+        /// The live photo resources of a live photo asset. If the asset is a gif or video `livePhotoResources` is `nil`
+        public var livePhotoResources: LivePhotoResources? {
+            switch self {
+            case .video: return nil
+            case .livePhoto(_, let resources): return resources
+            case .gif: return nil
+            }
+        }
     }
     
     /// Enum that represents the different types of assets that can be created
@@ -498,9 +525,12 @@ public final class FlipBookAssetWriter: NSObject {
     ///   - videoURL: The `URL` where the video is located
     ///   - progress: A closure that is called when image generator makes progress. Called from a background thread.
     ///   - completion: A closure called when image generation is complete. Called from a background thread.
-    internal func makeFrames(from videoURL: URL, progress: ((CGFloat) -> Void)?, completion: @escaping ([CGImage]) -> Void) {
+    internal func makeFrames(from videoURL: URL,
+                             progress: ((CGFloat) -> Void)?,
+                             completion: @escaping ([CGImage]) -> Void) {
         let asset = AVURLAsset(url: videoURL)
-        guard let videoTrack = asset.tracks(withMediaType: .video).first, let videoReader = try? AVAssetReader(asset: asset) else {
+        guard let videoTrack = asset.tracks(withMediaType: .video).first,
+              let videoReader = try? AVAssetReader(asset: asset) else {
             completion([])
             return
         }
@@ -593,43 +623,5 @@ internal extension CGImage {
 
         context.draw(self, in: CGRect(x: 0, y: 0, width: width, height: height))
         return pixelBuffer
-    }
-}
-
-// MARK: - ImageCache -
-
-/// Thread safe image cache
-internal final class ImageCache {
-
-    /// Queue for performing reads and writes to storage dictionary
-    internal let queue = DispatchQueue(label: "ImageCacheQueue")
-    
-    /// Dictionary that holds images
-    internal var storage: [CMTime: CGImage] = [:]
-    
-    /// Why of accessing storage directly through subscript
-    internal subscript(key: CMTime) -> CGImage? {
-        get {
-            return queue.sync {
-                return storage[key]
-            }
-        }
-        set {
-            queue.sync {
-                storage[key] = newValue
-                
-            }
-        }
-    }
-}
-
-// MARK: - CMTime + Hashable -
-
-/// Add conformance to `Hashable` to `CMTime`
-extension CMTime: Hashable {
-    
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(self.value)
-        hasher.combine(self.timescale)
     }
 }
