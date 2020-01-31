@@ -77,19 +77,54 @@ final class FlipBookUnitTests: XCTestCase {
         view.backgroundColor = UIColor.systemGray
         #endif
         
-        flipBook.startRecording(view, progress: { _ in }, completion: { _ in })
+        let expectation = self.expectation(description: "makeAsset")
+        var progress: CGFloat = 0.0
+        var animationCallCount = 0
+        var videoURL: URL? = nil
         
-        flipBook.stop()
+        flipBook.startRecording(view,
+                                compositionAnimation: { _ in animationCallCount += 1 },
+                                progress: { prog in progress = prog },
+                                completion: { result in
+                                    switch result {
+                                    case .success(let asset):
+                                        videoURL = asset.assetURL
+                                        expectation.fulfill()
+                                    case .failure(let error):
+                                        XCTFail("\(error)")
+                                    }
+        })
         
-        #if os(OSX)
-        XCTAssertEqual(flipBook.source?.isCancelled, true)
-        #else
-        XCTAssertEqual(flipBook.displayLink == nil, true)
-        #endif
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            flipBook.stop()
+            XCTAssertEqual(flipBook.writer.endDate != nil, true)
+            #if os(OSX)
+            XCTAssertEqual(flipBook.source?.isCancelled, true)
+            #else
+            XCTAssertEqual(flipBook.displayLink == nil, true)
+            #endif
+            XCTAssertEqual(flipBook.sourceView == nil, true)
+        }
         
-        XCTAssertEqual(flipBook.writer.endDate != nil, true)
+        waitForExpectations(timeout: 30) { (error) in
+            if let error = error {
+                XCTFail(error.localizedDescription)
+            }
+        }
+        XCTAssertEqual(progress != 0.0, true)
+        XCTAssertEqual(animationCallCount, 1)
         
-        XCTAssertEqual(flipBook.sourceView == nil, true)
+        guard let url = videoURL else {
+            XCTFail("Failed to get video url")
+            return
+        }
+        let asset = AVURLAsset(url: url)
+        guard let videoTrack = asset.tracks(withMediaType: .video).first else {
+            XCTFail("No video track")
+            return
+        }
+        XCTAssertEqual(videoTrack.naturalSize.width, view.bounds.width * view.scale)
+        XCTAssertEqual(videoTrack.naturalSize.height, view.bounds.height * view.scale)
     }
     
     func testMakeAssetFromImages() {
@@ -145,8 +180,11 @@ final class FlipBookUnitTests: XCTestCase {
         let expectation = self.expectation(description: "makeAsset")
         var prog: CGFloat = 0.0
         var assetURL: URL?
+        var animationCallCount = 0
         
-        flipBook.makeAsset(from: [image, image1, image2], progress: { (p) in
+        flipBook.makeAsset(from: [image, image1, image2], compositionAnimation: { _ in
+            animationCallCount += 1
+        }, progress: { (p) in
             prog = p
             XCTAssertEqual(Thread.isMainThread, true)
         }, completion: { result in
@@ -171,6 +209,7 @@ final class FlipBookUnitTests: XCTestCase {
         }
         
         XCTAssertEqual(prog != 0.0, true)
+        XCTAssertEqual(animationCallCount, 1)
         
         guard let url = assetURL else {
             XCTFail("No asset url")
@@ -188,6 +227,7 @@ final class FlipBookUnitTests: XCTestCase {
     static var allTests = [
         ("testInit", testInit),
         ("testStart", testStart),
-        ("testStop", testStop)
+        ("testStop", testStop),
+        ("testMakeAssetFromImages", testMakeAssetFromImages)
     ]
 }

@@ -268,6 +268,35 @@ final class FlipBookAssetWriterUnitTests: XCTestCase {
         XCTAssertEqual(pixelBuffer != nil, true)
     }
     
+    func testMakeFrames() {
+        let assetWriter = FlipBookAssetWriter()
+        let expectation = self.expectation(description: "makeVideo")
+        var progress: CGFloat = 0.0
+        var frames = [CGImage]()
+        makeVideo { (url) in
+            guard let url = url else {
+                XCTFail("Could not make movie")
+                return
+            }
+            assetWriter.makeFrames(from: url, progress: { (prog) in
+                progress = prog
+            }, completion: { images in
+                frames = images
+                expectation.fulfill()
+            })
+        }
+        
+        waitForExpectations(timeout: 30) { (error) in
+            if let error = error {
+                XCTFail(error.localizedDescription)
+            }
+        }
+        
+        XCTAssertEqual(progress != 0.0, true)
+        XCTAssertEqual(frames.isEmpty == false, true)
+        XCTAssertEqual(frames.count, 3)
+    }
+    
     static var allTests = [
         ("testInit", testInit),
         ("testWriteToFrame", testWriteToFrame),
@@ -275,6 +304,79 @@ final class FlipBookAssetWriterUnitTests: XCTestCase {
         ("testMakeFileOutputURL", testMakeFileOutputURL),
         ("testMakeWriter", testMakeWriter),
         ("testMakeFrameRate", testMakeFrameRate),
-        ("testMakePixelBuffer", testMakePixelBuffer)
+        ("testMakePixelBuffer", testMakePixelBuffer),
+        ("testMakeFrames", testMakeFrames)
     ]
+}
+
+// MARK: - FlipBookAssetWriterUnitTests + MakeVideo -
+
+extension FlipBookAssetWriterUnitTests {
+    
+    func makeVideo(completion: @escaping (URL?) -> Void) {
+        let flipBookAssetWriter = FlipBookAssetWriter()
+        flipBookAssetWriter.size = CGSize(width: 100.0 * View().scale, height: 100.0 * View().scale)
+        
+        // Make Images
+        let image: Image
+        let image1: Image
+        let image2: Image
+        #if os(OSX)
+        let view: View = NSView(frame: NSRect(origin: .zero, size: CGSize(width: 100.0, height: 100.0)))
+        view.wantsLayer = true
+        view.layer?.backgroundColor = NSColor.systemGray.cgColor
+        guard let img = view.fb_makeViewSnapshot() else {
+            completion(nil)
+            return
+        }
+        image = img
+        view.layer?.backgroundColor = NSColor.systemBlue.cgColor
+        guard let img1 = view.fb_makeViewSnapshot() else {
+            completion(nil)
+            return
+        }
+        image1 = img1
+        view.layer?.backgroundColor = NSColor.systemRed.cgColor
+        guard let img2 = view.fb_makeViewSnapshot() else {
+            completion(nil)
+            return
+        }
+        image2 = img2
+        #else
+        let view: View = UIView(frame: CGRect(origin: .zero, size: CGSize(width: 100.0, height: 100.0)))
+        view.backgroundColor = UIColor.systemGray
+        guard let img = view.fb_makeViewSnapshot() else {
+            completion(nil)
+            return
+        }
+        image = img
+        view.backgroundColor = UIColor.systemBlue
+        guard let img1 = view.fb_makeViewSnapshot() else {
+            completion(nil)
+            return
+        }
+        image1 = img1
+        view.backgroundColor = UIColor.systemRed
+        guard let img2 = view.fb_makeViewSnapshot() else {
+            completion(nil)
+            return
+        }
+        image2 = img2
+        #endif
+
+        flipBookAssetWriter.createAsset(from: [image, image1, image2], progress: { (_) in }, completion: { result in
+            switch result {
+                
+            case .success(let asset):
+                switch asset {
+                case .video(let url):
+                    completion(url)
+                case .livePhoto, .gif:
+                    completion(nil)
+                }
+            case .failure:
+                completion(nil)
+            }
+        })
+    }
 }

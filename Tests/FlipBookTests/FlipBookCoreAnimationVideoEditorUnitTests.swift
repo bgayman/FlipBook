@@ -174,7 +174,7 @@ extension FlipBookCoreAnimationVideoEditorUnitTests {
         image2 = img2
         #endif
 
-        flipBookAssetWriter.createAsset(from: [image, image1, image2], progress: { (_) in }, completion: { result in
+        flipBookAssetWriter.createAsset(from: [image, image1, image2, image, image1, image2], progress: { (_) in }, completion: { result in
             switch result {
                 
             case .success(let asset):

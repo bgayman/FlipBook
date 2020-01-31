@@ -155,8 +155,10 @@ public final class FlipBook: NSObject {
                 self.writer.startDate = nil
                 self.writer.endDate = nil
                 self.onProgress = nil
-                self.onCompletion?(result)
+                self.compositionAnimation = nil
+                let completion = self.onCompletion
                 self.onCompletion = nil
+                completion?(result)
             }
         })
     }
@@ -175,8 +177,10 @@ public final class FlipBook: NSObject {
         writer.preferredFramesPerSecond = preferredFramesPerSecond
         let firstCGImage = images.first?.cgI
         writer.size = CGSize(width: firstCGImage?.width ?? 0, height: firstCGImage?.height ?? 0)
-        writer.createVideoFromCapturedFrames(assetType: assetType, progress: { (prog) in
-            DispatchQueue.main.async { progress?(prog) }
+        writer.createVideoFromCapturedFrames(assetType: assetType,
+                                             compositionAnimation: compositionAnimation,
+                                             progress: { (prog) in
+                                                DispatchQueue.main.async { progress?(prog) }
         }, completion: { result in
             DispatchQueue.main.async { completion(result) }
         })

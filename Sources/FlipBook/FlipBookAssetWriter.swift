@@ -398,6 +398,46 @@ public final class FlipBookAssetWriter: NSObject {
             
         }
     }
+    
+    /// Gets frames as `CGImage` from a video asset
+    /// - Parameters:
+    ///   - videoURL: The `URL` where the video is located
+    ///   - progress: A closure that is called when image generator makes progress. Called from a background thread.
+    ///   - completion: A closure called when image generation is complete. Called from a background thread.
+    public func makeFrames(from videoURL: URL,
+                             progress: ((CGFloat) -> Void)?,
+                             completion: @escaping ([CGImage]) -> Void) {
+        let asset = AVURLAsset(url: videoURL)
+        guard let videoTrack = asset.tracks(withMediaType: .video).first,
+              let videoReader = try? AVAssetReader(asset: asset) else {
+            completion([])
+            return
+        }
+        
+        let videoReaderSettings = [
+            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA as NSNumber
+        ]
+        let videoReaderOutput = AVAssetReaderTrackOutput(track: videoTrack, outputSettings: videoReaderSettings)
+        videoReader.add(videoReaderOutput)
+        let duration = videoTrack.timeRange.duration.seconds
+        let frameCount = Int(duration * Double(videoTrack.nominalFrameRate) + 0.5)
+        var currentFrameCount = 0
+        if videoReader.startReading() {
+            var sampleBuffers = [CMSampleBuffer]()
+            while let sampleBuffer = videoReaderOutput.copyNextSampleBuffer() {
+                currentFrameCount += 1
+                sampleBuffers.append(sampleBuffer)
+                progress?(CGFloat(currentFrameCount) / CGFloat(frameCount))
+            }
+            let cgImages = sampleBuffers
+                .compactMap { CMSampleBufferGetImageBuffer($0) }
+                .map { CIImage(cvImageBuffer: $0) }
+                .compactMap { ciContext.createCGImage($0, from: $0.extent) }
+            completion(cgImages)
+        } else {
+            completion([])
+        }
+    }
         
     // MARK: - Internal Methods -
     
@@ -518,46 +558,6 @@ public final class FlipBookAssetWriter: NSObject {
             frameRate = preferredFramesPerSecond
         }
         return frameRate
-    }
-    
-    /// Gets frames as `CGImage` from a video asset
-    /// - Parameters:
-    ///   - videoURL: The `URL` where the video is located
-    ///   - progress: A closure that is called when image generator makes progress. Called from a background thread.
-    ///   - completion: A closure called when image generation is complete. Called from a background thread.
-    internal func makeFrames(from videoURL: URL,
-                             progress: ((CGFloat) -> Void)?,
-                             completion: @escaping ([CGImage]) -> Void) {
-        let asset = AVURLAsset(url: videoURL)
-        guard let videoTrack = asset.tracks(withMediaType: .video).first,
-              let videoReader = try? AVAssetReader(asset: asset) else {
-            completion([])
-            return
-        }
-        
-        let videoReaderSettings = [
-            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA as NSNumber
-        ]
-        let videoReaderOutput = AVAssetReaderTrackOutput(track: videoTrack, outputSettings: videoReaderSettings)
-        videoReader.add(videoReaderOutput)
-        let duration = videoTrack.timeRange.duration.seconds
-        let frameCount = Int(duration * Double(videoTrack.nominalFrameRate) + 0.5)
-        var currentFrameCount = 0
-        if videoReader.startReading() {
-            var sampleBuffers = [CMSampleBuffer]()
-            while let sampleBuffer = videoReaderOutput.copyNextSampleBuffer() {
-                currentFrameCount += 1
-                sampleBuffers.append(sampleBuffer)
-                progress?(CGFloat(currentFrameCount) / CGFloat(frameCount))
-            }
-            let cgImages = sampleBuffers
-                .compactMap { CMSampleBufferGetImageBuffer($0) }
-                .map { CIImage(cvImageBuffer: $0) }
-                .compactMap { ciContext.createCGImage($0, from: $0.extent) }
-            completion(cgImages)
-        } else {
-            completion([])
-        }
     }
 }
 
