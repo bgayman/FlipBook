@@ -59,7 +59,7 @@ class ViewController: UIViewController {
         super.viewDidAppear(animated: animated)
         
         // Start recording when we appear, here we're recording the root view of `ViewController` but could record any arbitary view
-        flipBook.startRecording(view, progress: nil, completion: { [weak self] result in
+        flipBook.startRecording(view) { [weak self] result in
             
             // Switch on result
             switch result {
@@ -77,7 +77,7 @@ class ViewController: UIViewController {
                 // Handle error in recording
                 print(error)
             }
-        })
+        }
         
         // In this example we want to record some animation, so after we start recording we kick off the animation
         animateMyAnimatingView {
@@ -117,7 +117,7 @@ class ViewController: UIViewController {
         let images = (1 ... 48).compactMap { UIImage(named: "animationImage\($0)") }
         
         // Make the asset
-        flipBook.makeAsset(from: images, progress: nil) { (result) in
+        flipBook.makeAsset(from: images) { [weak self] (result) in
             switch result {
             case .success(let asset):
                 // handle asset
@@ -192,7 +192,7 @@ class ViewController: UIViewController {
             strokeAnimation.fillMode = .forwards
             shapeLayer.add(strokeAnimation, forKey: "strokeAnimation")
             
-        }, progress: nil, completion: { [weak self] result in
+        }, completion: { [weak self] result in
             
             // Switch on result
             switch result {
