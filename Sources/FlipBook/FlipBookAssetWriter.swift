@@ -372,7 +372,6 @@ public final class FlipBookAssetWriter: NSObject {
                         completion(.failure(error))
                     }
                 })
-                
             } else {
                 
                 // No composition so make GIF directly
@@ -394,6 +393,7 @@ public final class FlipBookAssetWriter: NSObject {
                                         completion(.failure(error))
                                     }
                 })
+                frames = []
             }
             
         }
