@@ -99,6 +99,71 @@ public final class FlipBookGIFWriter: NSObject {
             }
         }
     }
+    
+    /// Determines the frame rate of a gif by looking at the `delay` of the first image
+    /// - Parameter gifURL: The file `URL` where the gif is located.
+    /// - Returns: The frame rate as an `Int` or `nil` if data at url was invalid
+    public func makeFrameRate(_ gifURL: URL) -> Int? {
+        guard let gifData = try? Data(contentsOf: gifURL),
+              let source =  CGImageSourceCreateWithData(gifData as CFData, nil) else { return nil }
+        let delay = getDelayForImageAtIndex(0, source: source)
+        return Int((1.0 / delay) + 0.5)
+    }
+    
+    /// Creates an array of `Image`s that represent the frames of a gif
+    /// - Parameter gifURL: The file `URL` where the gif is located.
+    /// - Returns: The frames rate as an `Int` or `nil` if data at url was invalid
+    public func makeImages(_ gifURL: URL) -> [Image]? {
+        guard let gifData = try? Data(contentsOf: gifURL),
+              let source =  CGImageSourceCreateWithData(gifData as CFData, nil) else { return nil }
+        var images = [Image]()
+        let imageCount = CGImageSourceGetCount(source)
+        for i in 0 ..< imageCount {
+            if let image = CGImageSourceCreateImageAtIndex(source, i, nil) {
+                images.append(Image.makeImage(cgImage: image))
+            }
+        }
+        return images
+    }
+    
+    /// Determines the delay of the frame of a gif at a given index
+    /// - Parameters:
+    ///   - index: The index to determine the delay for
+    ///   - source: The `CGImageSource` of the gif
+    internal func getDelayForImageAtIndex(_ index: Int, source: CGImageSource) -> Double {
+        var delay = 0.1
+
+        // Get dictionaries
+        let cfProperties = CGImageSourceCopyPropertiesAtIndex(source, index, nil)
+        let gifPropertiesPointer = UnsafeMutablePointer<UnsafeRawPointer?>.allocate(capacity: 0)
+        defer {
+            gifPropertiesPointer.deallocate()
+        }
+        let unsafePointer = Unmanaged.passUnretained(kCGImagePropertyGIFDictionary).toOpaque()
+        if CFDictionaryGetValueIfPresent(cfProperties, unsafePointer, gifPropertiesPointer) == false {
+            return delay
+        }
+
+        let gifProperties: CFDictionary = unsafeBitCast(gifPropertiesPointer.pointee, to: CFDictionary.self)
+
+        // Get delay time
+        var delayObject: AnyObject = unsafeBitCast(
+            CFDictionaryGetValue(gifProperties,
+                Unmanaged.passUnretained(kCGImagePropertyGIFUnclampedDelayTime).toOpaque()),
+            to: AnyObject.self)
+        if delayObject.doubleValue == 0 {
+            delayObject = unsafeBitCast(CFDictionaryGetValue(gifProperties,
+                Unmanaged.passUnretained(kCGImagePropertyGIFDelayTime).toOpaque()), to: AnyObject.self)
+        }
+
+        if let delayObject = delayObject as? Double, delayObject > 0 {
+            delay = delayObject
+        } else {
+            delay = 0.1
+        }
+
+        return delay
+    }
 }
 
 // MARK: - CGImage + Resize -
