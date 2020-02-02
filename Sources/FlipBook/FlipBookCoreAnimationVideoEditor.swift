@@ -14,7 +14,7 @@ import AVFoundation
 
 // MARK: - FlipBookCoreAnimationVideoEditor -
 
-public final class FlipBookCoreAnimationVideoEditor {
+public final class FlipBookCoreAnimationVideoEditor: NSObject {
     
     // MARK: - Types -
     
