@@ -91,13 +91,10 @@ internal final class RPScreenWriter: NSObject {
             print("Error opening video file \(writerError)")
         }
         
-        var channelLayout = AudioChannelLayout()
-        channelLayout.mChannelLayoutTag = kAudioChannelLayoutTag_MPEG_5_1_D
         let audioOutputSettings = [
             AVNumberOfChannelsKey : 2,
             AVFormatIDKey : kAudioFormatMPEG4AAC_HE,
-            AVSampleRateKey : 44100,
-            AVChannelLayoutKey : NSData(bytes: &channelLayout, length: MemoryLayout.size(ofValue: channelLayout))
+            AVSampleRateKey : 44100
             ] as [String : Any]
         
         appAudioInput = AVAssetWriterInput(mediaType: .audio, outputSettings: audioOutputSettings)
