@@ -191,8 +191,14 @@ public final class FlipBook: NSObject {
                         self.onCompletion?(.failure(error))
                         self.onCompletion = nil
                     } else {
+                        let composition: ((CALayer) ->  Void)?
+                        if self.compositionAnimation != nil  {
+                            composition = { [weak self] layer in  self?.compositionAnimation?(layer) }
+                        } else {
+                            composition = nil
+                        }
                         self.writer.endLiveCapture(assetType: self.assetType,
-                                                   compositionAnimation: { [weak self] layer in  self?.compositionAnimation?(layer) },
+                                                   compositionAnimation: composition,
                                                    progress: { [weak self] prog in DispatchQueue.main.async { self?.onProgress?(prog) }
                             }, completion: { [weak self] result in
                                 guard let self = self else {
