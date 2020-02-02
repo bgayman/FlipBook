@@ -110,11 +110,11 @@ public final class FlipBook: NSObject {
             do {
                 try writer.startLiveCapture()
                 if #available(iOS 11.0, *) {
-                    screenRecorder.startCapture(handler: { (buffer, type, error) in
+                    screenRecorder.startCapture(handler: { [weak self] (buffer, type, error) in
                         if let error = error {
                             print(error)
                         }
-                        
+                        self?.writer.append(buffer, type: type)
                     }, completionHandler: { error in
                         guard let error = error else {
                             return
