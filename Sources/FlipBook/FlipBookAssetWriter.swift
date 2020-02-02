@@ -105,13 +105,13 @@ public final class FlipBookAssetWriter: NSObject {
     /// **Default** is the size of the `keyWindow` of the application
     public var size: CGSize = {
         #if os(OSX)
-        let size = NSApplication.shared.keyWindow?.frame.size ?? .zero
-        let scale = NSApplication.shared.keyWindow?.backingScaleFactor ?? 1.0
+        let size = NSScreen.main?.frame.size ?? CGSize(width: 400.0, height: 300.0)
+        let scale = NSScreen.main?.backingScaleFactor ?? 1.0
         return CGSize(width: size.width * scale, height: size.height * scale)
         #else
-        let size = UIApplication.shared.keyWindow?.frame.size
-        let scale = UIApplication.shared.keyWindow?.screen.scale ?? 1.0
-        return CGSize(width: (size?.width ?? 0) * scale, height: (size?.height ?? 0) * scale)
+        let size = UIScreen.main.bounds.size
+        let scale = UIScreen.main.scale
+        return CGSize(width: size.width * scale, height: size.height * scale)
         #endif
     }()
     
