@@ -466,10 +466,12 @@ public final class FlipBookLivePhotoWriter: NSObject {
         return item
     }
     
-    /// Makes a still image at the 50% mark of a video
-    /// - Parameter videoURL: The `URL` of the video to make the still image from
-    internal func makeKeyPhoto(from videoURL: URL) throws -> URL? {
-        var percent: Float = 0.5
+    /// Makes a still image at the % mark of a video
+    /// - Parameters:
+    /// - videoURL: The `URL` of the video to make the still image from
+    /// - percent: How far into the video the key photo should come from **Default** is 50%
+    internal func makeKeyPhoto(from videoURL: URL, percent: Float = 0.5) throws -> URL? {
+        var percent: Float = percent
         let videoAsset = AVURLAsset(url: videoURL)
         if let stillImageTime = videoAsset.getStillImageTime() {
             percent = Float(stillImageTime.value) / Float(videoAsset.duration.value)

@@ -27,7 +27,7 @@ final class FlipBookAssetWriterUnitTests: XCTestCase {
         XCTAssertEqual(flipBookAssetWriter.gifImageScale, 0.5)
         XCTAssertEqual(flipBookAssetWriter.frames.isEmpty, true)
         XCTAssertEqual(flipBookAssetWriter.queue.label, "com.FlipBook.asset.writer.queue")
-        XCTAssertEqual(flipBookAssetWriter.input == nil, true)
+        XCTAssertEqual(flipBookAssetWriter.videoInput == nil, true)
         XCTAssertEqual(flipBookAssetWriter.adapter == nil, true)
         XCTAssertEqual(flipBookAssetWriter.gifWriter != nil, true)
     }
@@ -218,9 +218,9 @@ final class FlipBookAssetWriterUnitTests: XCTestCase {
         flipBookAssetWriter.size = CGSize(width: 100.0, height: 100.0)
         do {
             let writer = try flipBookAssetWriter.makeWriter()
-            XCTAssertEqual(flipBookAssetWriter.input != nil, true)
+            XCTAssertEqual(flipBookAssetWriter.videoInput != nil, true)
             XCTAssertEqual(flipBookAssetWriter.adapter != nil, true)
-            XCTAssertEqual(writer.inputs.contains(flipBookAssetWriter.input!), true)
+            XCTAssertEqual(writer.inputs.contains(flipBookAssetWriter.videoInput!), true)
         } catch {
             XCTFail(error.localizedDescription)
         }
