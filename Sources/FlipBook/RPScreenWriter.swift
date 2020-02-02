@@ -64,15 +64,15 @@ internal final class RPScreenWriter: NSObject {
             videoSettings = [
                 AVVideoCodecKey : AVVideoCodecType.h264,
                 AVVideoScalingModeKey : AVVideoScalingModeResizeAspectFill,
-                AVVideoWidthKey  : UIScreen.main.bounds.width*2,
-                AVVideoHeightKey : (UIScreen.main.bounds.height - (UIApplication.shared.statusBarFrame.height + 80)*2)*2
+                AVVideoWidthKey  : UIScreen.main.bounds.width * UIScreen.main.scale,
+                AVVideoHeightKey : UIScreen.main.bounds.height * UIScreen.main.scale
                 ] as [String : Any]
         } else {
             videoSettings = [
                 AVVideoCodecKey : AVVideoCodecH264,
                 AVVideoScalingModeKey : AVVideoScalingModeResizeAspectFill,
-                AVVideoWidthKey  : UIScreen.main.bounds.width*2,
-                AVVideoHeightKey : (UIScreen.main.bounds.height - (UIApplication.shared.statusBarFrame.height + 80)*2)*2
+                AVVideoWidthKey  : UIScreen.main.bounds.width * UIScreen.main.scale,
+                AVVideoHeightKey : UIScreen.main.bounds.height * UIScreen.main.scale
             ] as [String : Any]
         }
         
@@ -94,7 +94,7 @@ internal final class RPScreenWriter: NSObject {
         var channelLayout = AudioChannelLayout()
         channelLayout.mChannelLayoutTag = kAudioChannelLayoutTag_MPEG_5_1_D
         let audioOutputSettings = [
-            AVNumberOfChannelsKey : 6,
+            AVNumberOfChannelsKey : 2,
             AVFormatIDKey : kAudioFormatMPEG4AAC_HE,
             AVSampleRateKey : 44100,
             AVChannelLayoutKey : NSData(bytes: &channelLayout, length: MemoryLayout.size(ofValue: channelLayout))
