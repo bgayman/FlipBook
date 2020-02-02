@@ -107,10 +107,6 @@ public final class FlipBook: NSObject {
             shouldUseReplayKit = false
             startRecording(view, compositionAnimation: compositionAnimation, progress: progress, completion: completion)
             #else
-            guard screenRecorder.isAvailable else {
-                completion(.failure(FlipBookError.recordingNotAvailible))
-                return
-            }
             do {
                 try writer.startLiveCapture()
                 if #available(iOS 11.0, *) {
