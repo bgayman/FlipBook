@@ -107,6 +107,11 @@ public final class FlipBook: NSObject {
             shouldUseReplayKit = false
             startRecording(view, compositionAnimation: compositionAnimation, progress: progress, completion: completion)
             #else
+            onProgress = progress
+            onCompletion = completion
+            writer.gifImageScale = gifImageScale
+            writer.preferredFramesPerSecond = preferredFramesPerSecond
+            self.compositionAnimation = compositionAnimation
             do {
                 try writer.startLiveCapture()
                 if #available(iOS 11.0, *) {
