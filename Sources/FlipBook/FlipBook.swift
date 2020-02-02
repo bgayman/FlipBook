@@ -209,9 +209,8 @@ public final class FlipBook: NSObject {
                                     self.writer.endDate = nil
                                     self.onProgress = nil
                                     self.compositionAnimation = nil
-                                    let completion = self.onCompletion
+                                    self.onCompletion?(result)
                                     self.onCompletion = nil
-                                    completion?(result)
                                 }
                         })
                     }
@@ -254,9 +253,8 @@ public final class FlipBook: NSObject {
                     self.writer.endDate = nil
                     self.onProgress = nil
                     self.compositionAnimation = nil
-                    let completion = self.onCompletion
+                    self.onCompletion?(result)
                     self.onCompletion = nil
-                    completion?(result)
                 }
             })
         }
