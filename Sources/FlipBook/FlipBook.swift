@@ -28,8 +28,8 @@ public final class FlipBook: NSObject {
     // MARK: - Public Properties
     
     /// The number of frames per second targetted
-    /// **Default** 60 frames per second
-    public var preferredFramesPerSecond: Int = 60
+    /// **Default** 60 frames per second on macOS and to the `maxFramesPerSecond` of the main screen of the device on iOS
+    public var preferredFramesPerSecond: Int = Screen.maximumFramesPerSecond
     
     /// The amount images in animated gifs should be scaled by. Fullsize gif images can be memory intensive. **Default** `0.5`
     public var gifImageScale: Float = 0.5
