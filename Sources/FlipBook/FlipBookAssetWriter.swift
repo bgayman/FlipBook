@@ -144,11 +144,6 @@ public final class FlipBookAssetWriter: NSObject {
     /// The video writer input for the asset writer
     internal var videoInput: AVAssetWriterInput?
     
-    /// The audio writer input for the asset writer
-    internal var audioInput: AVAssetWriterInput?
-    
-    internal var assetWriter: AVAssetWriter?
-    
     /// The input pixel buffer adaptor for the asset writer
     internal var adapter: AVAssetWriterInputPixelBufferAdaptor?
     
@@ -164,8 +159,9 @@ public final class FlipBookAssetWriter: NSObject {
     /// The core image context
     internal lazy var ciContext = CIContext()
     
-    /// Determines whether the asset writer should create inputs for audio
-    internal var shouldCreateAudioInput: Bool = false
+    #if os(iOS)
+    internal lazy var rpScreenWriter = RPScreenWriter()
+    #endif
     
     // MARK: - Public Methods -
     
@@ -181,23 +177,7 @@ public final class FlipBookAssetWriter: NSObject {
     ///   - sampleBuffer: The sample buffer to be appended
     ///   - type: The type of the sample buffer to be appended
     public func append(_ sampleBuffer: CMSampleBuffer, type: RPSampleBufferType) {
-        switch type {
-        case .video: videoInput?.append(sampleBuffer)
-        case .audioApp: audioInput?.append(sampleBuffer)
-        case .audioMic: break
-        @unknown default:
-            break
-        }
-    }
-    
-    /// Sets up the `AVAssetWriter` and inputs for ReplayKit driven capturing
-    public func startLiveCapture() throws {
-        let writer = try makeWriter()
-        guard writer.startWriting() else {
-            throw writer.error ?? FlipBookAssetWriterError.couldNotWriteAsset
-        }
-        writer.startSession(atSourceTime: .zero)
-        assetWriter = writer
+        rpScreenWriter.writeBuffer(sampleBuffer, rpSampleType: type)
     }
     
     /// Ends live capture driven by `ReplayKit`
@@ -651,13 +631,6 @@ public final class FlipBookAssetWriter: NSObject {
         }
         videoInput?.expectsMediaDataInRealTime = true
         
-        if shouldCreateAudioInput {
-            audioInput = AVAssetWriterInput(mediaType: .audio, outputSettings: nil)
-            audioInput?.expectsMediaDataInRealTime = true
-            if let inp = self.audioInput {
-                writer.add(inp)
-            }
-        }
         return writer
     }
     
@@ -716,22 +689,14 @@ public final class FlipBookAssetWriter: NSObject {
     /// Ends the realtime writing of sample buffers and writes to `fileOutputPath`
     /// - Parameter completion: Closure called when writing is finished
     internal func endLiveCaptureAndWrite(completion: @escaping (Result<URL, Error>) -> Void) {
-        guard let fileURL = self.fileOutputURL else {
-            completion(.failure(FlipBookAssetWriterError.couldNotWriteAsset))
-            return
-        }
-        do {
-            if FileManager.default.fileExists(atPath: fileURL.path) {
-                try FileManager.default.removeItem(atPath: fileURL.path)
+        rpScreenWriter.finishWriting { (url, error) in
+            if let url = url {
+                completion(.success(url))
+            } else if let error = error{
+                completion(.failure(error))
+            } else {
+                completion(.failure(FlipBookAssetWriterError.unknownError))
             }
-            videoInput?.markAsFinished()
-            audioInput?.markAsFinished()
-            assetWriter?.finishWriting { [weak self] in
-                self?.frames = []
-                completion(.success(fileURL))
-            }
-        } catch {
-            completion(.failure(error))
         }
     }
     

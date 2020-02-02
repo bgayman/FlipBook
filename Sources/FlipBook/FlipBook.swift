@@ -43,11 +43,7 @@ public final class FlipBook: NSObject {
     public var assetType: FlipBookAssetWriter.AssetType = .video
     
     /// Boolean that when set to `true` will cause the entire screen to be captured using `ReplayKit` on iOS 11.0+ only and will otherwise be ignored
-    public var shouldUseReplayKit: Bool = false {
-        didSet {
-            writer.shouldCreateAudioInput = shouldUseReplayKit
-        }
-    }
+    public var shouldUseReplayKit: Bool = false
     
     #if os(iOS)
     
@@ -112,26 +108,21 @@ public final class FlipBook: NSObject {
             writer.gifImageScale = gifImageScale
             writer.preferredFramesPerSecond = preferredFramesPerSecond
             self.compositionAnimation = compositionAnimation
-            do {
-                try writer.startLiveCapture()
-                if #available(iOS 11.0, *) {
-                    screenRecorder.startCapture(handler: { [weak self] (buffer, type, error) in
-                        if let error = error {
-                            print(error)
-                        }
-                        self?.writer.append(buffer, type: type)
-                    }, completionHandler: { error in
-                        guard let error = error else {
-                            return
-                        }
+            if #available(iOS 11.0, *) {
+                screenRecorder.startCapture(handler: { [weak self] (buffer, type, error) in
+                    if let error = error {
                         print(error)
-                    })
-                } else {
-                    shouldUseReplayKit = false
-                    startRecording(view, compositionAnimation: compositionAnimation, progress: progress, completion: completion)
-                }
-            } catch {
-                completion(.failure(error))
+                    }
+                    self?.writer.append(buffer, type: type)
+                }, completionHandler: { error in
+                    guard let error = error else {
+                        return
+                    }
+                    print(error)
+                })
+            } else {
+                shouldUseReplayKit = false
+                startRecording(view, compositionAnimation: compositionAnimation, progress: progress, completion: completion)
             }
             #endif
         } else {
