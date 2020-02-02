@@ -42,13 +42,14 @@ public final class FlipBook: NSObject {
     /// **Default** `.video`
     public var assetType: FlipBookAssetWriter.AssetType = .video
     
-    #if os(iOS)
-    /// Boolean that when set to `true` will cause the entire screen to be captured using `ReplayKit` on iOS 11.0+ only
+    /// Boolean that when set to `true` will cause the entire screen to be captured using `ReplayKit` on iOS 11.0+ only and will otherwise be ignored
     public var shouldUseReplayKit: Bool = false {
         didSet {
             writer.shouldCreateAudioInput = shouldUseReplayKit
         }
     }
+    
+    #if os(iOS)
     
     /// The replay kit screen recorder used when `shouldUseReplayKit` is set to `true`
     public lazy var screenRecorder: RPScreenRecorder = {
@@ -102,6 +103,10 @@ public final class FlipBook: NSObject {
                                progress: ((CGFloat) -> Void)? = nil,
                                completion: @escaping (Result<FlipBookAssetWriter.Asset, Error>) -> Void) {
         if shouldUseReplayKit {
+            #if os(macOS)
+            shouldUseReplayKit = false
+            startRecording(view, compositionAnimation: compositionAnimation, progress: progress, completion: completion)
+            #else
             guard screenRecorder.isAvailable else {
                 completion(.failure(FlipBookError.recordingNotAvailible))
                 return
@@ -127,7 +132,7 @@ public final class FlipBook: NSObject {
             } catch {
                 completion(.failure(error))
             }
-            
+            #endif
         } else {
             #if os(OSX)
             guard queue == nil else {
@@ -175,6 +180,10 @@ public final class FlipBook: NSObject {
     /// Stops recording of view and begins writing frames to video
     public func stop() {
         if shouldUseReplayKit {
+            #if os(macOS)
+            shouldUseReplayKit = false
+            stop()
+            #else
             if #available(iOS 11.0, *) {
                 screenRecorder.stopCapture { [weak self] (error) in
                     guard let self = self else {
@@ -209,6 +218,7 @@ public final class FlipBook: NSObject {
                 shouldUseReplayKit = false
                 stop()
             }
+            #endif
         } else {
             #if os(OSX)
             source?.cancel()
