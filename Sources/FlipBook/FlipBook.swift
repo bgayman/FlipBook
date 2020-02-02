@@ -194,6 +194,20 @@ public final class FlipBook: NSObject {
         writer.livePhotoWriter.saveToLibrary(resources, completion: completion)
     }
     
+    /// Determines the frame rate of a gif by looking at the `delay` of the first image
+    /// - Parameter gifURL: The file `URL` where the gif is located.
+    /// - Returns: The frame rate as an `Int` or `nil` if data at url was invalid
+    public func makeFrameRate(_ gifURL: URL) -> Int? {
+        return writer.gifWriter?.makeFrameRate(gifURL)
+    }
+    
+    /// Creates an array of `Image`s that represent the frames of a gif
+    /// - Parameter gifURL: The file `URL` where the gif is located.
+    /// - Returns: The frames rate as an `Int` or `nil` if data at url was invalid
+    public func makeImages(_ gifURL: URL) -> [Image]? {
+        return writer.gifWriter?.makeImages(gifURL)
+    }
+    
     // MARK: - Internal Methods -
     
     #if os(OSX)
