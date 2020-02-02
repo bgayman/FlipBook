@@ -212,7 +212,6 @@ extension FlipBookGIFWriterUnitTests {
         #else
         let view: View = UIView(frame: CGRect(origin: .zero, size: CGSize(width: 100.0, height: 100.0)))
         view.backgroundColor = UIColor.systemGray
-        scale = view.scale
         guard let img = view.fb_makeViewSnapshot() else {
             XCTFail("Could not make image")
             return []

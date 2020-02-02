@@ -10,7 +10,7 @@ import AppKit
 public typealias Screen = NSScreen
 
 extension Screen {
-    static var maximumFramesPerSecond: Int {
+    static var maxFramesPerSecond: Int {
         return 60
     }
 }
@@ -20,8 +20,12 @@ import UIKit
 public typealias Screen = UIScreen
 
 extension Screen {
-    static var maximumFramesPerSecond: Int {
-        return UIScreen.main.maxFramesPerSecond
+    static var maxFramesPerSecond: Int {
+        if #available(iOS 10.3, *) {
+            return UIScreen.main.maximumFramesPerSecond
+        } else {
+            return 60
+        }
     }
 }
 #endif
