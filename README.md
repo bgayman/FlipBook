@@ -245,7 +245,7 @@ It is important to also be mindful of sensitive user information and data; don't
 
 ## Examples of Generated Assets
 
-You can find a gallery of generated assets [here](https://bradgayman.com/FlipBook/)
+You can find a gallery of generated assets [here](https://bradgayman.com/FlipBook/). You can also [read](https://bradgayman.com/blog/recordingAView/) more about the motivation for FlipBook.
 
 ## Contact
 
