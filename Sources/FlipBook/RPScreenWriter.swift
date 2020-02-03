@@ -31,7 +31,6 @@ internal final class RPScreenWriter: NSObject {
     
     var currentTime: CMTime = .zero {
         didSet {
-            print("currentTime => \(currentTime.seconds)")
             didUpdateSeconds?(currentTime.seconds)
         }
     }
@@ -39,7 +38,7 @@ internal final class RPScreenWriter: NSObject {
     var didUpdateSeconds: ((Double) -> ())?
     
     override init() {
-        let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as NSString
+        let documentsPath = NSSearchPathForDirectoriesInDomains(.cachesDirectory, .userDomainMask, true)[0] as NSString
         self.videoOutputURL = URL(fileURLWithPath: documentsPath.appendingPathComponent("FlipBookVideo.mp4"))
         self.audioOutputURL = URL(fileURLWithPath: documentsPath.appendingPathComponent("FlipBookAudio.mp4"))
         super.init()
@@ -184,12 +183,16 @@ internal final class RPScreenWriter: NSObject {
             self.isVideoWritingFinished = true
             completion()
         }
-        
-        self.appAudioInput?.markAsFinished()
-        self.micAudioInput?.markAsFinished()
-        self.audioWriter?.finishWriting {
+
+        if audioWriter?.status.rawValue != 0 {
+            self.appAudioInput?.markAsFinished()
+            self.micAudioInput?.markAsFinished()
+            self.audioWriter?.finishWriting {
+                self.isAudioWritingFinished = true
+                completion()
+            }
+        } else {
             self.isAudioWritingFinished = true
-            completion()
         }
         
         func completion() {
@@ -226,7 +229,6 @@ internal final class RPScreenWriter: NSObject {
             
             let audioAsset = AVAsset(url: self.audioOutputURL)
             let audioTracks = audioAsset.tracks(withMediaType: .audio)
-            print(audioAsset.duration.seconds)
             for audioTrack in audioTracks {
                 let audioCompositionTrack = mergeComposition.addMutableTrack(withMediaType: .audio,
                                                                              preferredTrackID: kCMPersistentTrackID_Invalid)
@@ -238,8 +240,8 @@ internal final class RPScreenWriter: NSObject {
                     print(error)
                 }
             }
-            let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as NSString
-            let outputURL = URL(fileURLWithPath: documentsPath.appendingPathComponent("RPScreenWriterMergeVideo.mp4"))
+            let documentsPath = NSSearchPathForDirectoriesInDomains(.cachesDirectory, .userDomainMask, true)[0] as NSString
+            let outputURL = URL(fileURLWithPath: documentsPath.appendingPathComponent("FlipBookMergedVideo.mp4"))
             do {
                 try FileManager.default.removeItem(at: outputURL)
             } catch {}

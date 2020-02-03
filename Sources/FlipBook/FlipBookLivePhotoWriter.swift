@@ -17,7 +17,7 @@ import Photos
 // MARK: - LivePhotoResources -
 
 /// Struct that represents the resources that comprise a Live Photo
-public struct LivePhotoResources {
+public struct LivePhotoResources: Equatable, Hashable {
     
     /// The url of the still image of a Live Photo
     let imageURL: URL

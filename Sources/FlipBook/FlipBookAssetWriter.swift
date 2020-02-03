@@ -778,4 +778,27 @@ internal extension CGImage {
         context.draw(self, in: CGRect(x: 0, y: 0, width: width, height: height))
         return pixelBuffer
     }
+    
+    func makeCMSampleBuffer(_ frameIdx: Int) -> CMSampleBuffer? {
+        guard let pixelBuffer = makePixelBuffer() else { return nil }
+        var newSampleBuffer: CMSampleBuffer? = nil
+        let time = CMTime(value: CMTimeValue(frameIdx), timescale: 100)
+        var timimgInfo: CMSampleTimingInfo = CMSampleTimingInfo(duration: time,
+                                                                presentationTimeStamp: time,
+                                                                decodeTimeStamp: time)
+        var videoInfo: CMVideoFormatDescription? = nil
+        CMVideoFormatDescriptionCreateForImageBuffer(allocator: nil,
+                                                     imageBuffer: pixelBuffer,
+                                                     formatDescriptionOut: &videoInfo)
+        guard let videoI = videoInfo else { return nil }
+        CMSampleBufferCreateForImageBuffer(allocator: kCFAllocatorDefault,
+                                           imageBuffer: pixelBuffer,
+                                           dataReady: true,
+                                           makeDataReadyCallback: nil,
+                                           refcon: nil,
+                                           formatDescription: videoI,
+                                           sampleTiming: &timimgInfo,
+                                           sampleBufferOut: &newSampleBuffer)
+        return newSampleBuffer
+    }
 }

@@ -25,7 +25,7 @@ public final class FlipBook: NSObject {
         /// Recording is already in progress. Stop current recording before beginning another.
         case recordingInProgress
         
-        /// Recording is not availible
+        /// Recording is not availible using `ReplayKit` with `assetType == .gif`
         case recordingNotAvailible
     }
 
@@ -33,6 +33,7 @@ public final class FlipBook: NSObject {
     
     /// The number of frames per second targetted
     /// **Default** 60 frames per second on macOS and to the `maxFramesPerSecond` of the main screen of the device on iOS
+    /// - Will be ignored if `shouldUseReplayKit` is set to true
     public var preferredFramesPerSecond: Int = Screen.maxFramesPerSecond
     
     /// The amount images in animated gifs should be scaled by. Fullsize gif images can be memory intensive. **Default** `0.5`
@@ -103,6 +104,10 @@ public final class FlipBook: NSObject {
             shouldUseReplayKit = false
             startRecording(view, compositionAnimation: compositionAnimation, progress: progress, completion: completion)
             #else
+            guard assetType != .gif else {
+                completion(.failure(FlipBookError.recordingNotAvailible))
+                return
+            }
             onProgress = progress
             onCompletion = completion
             writer.gifImageScale = gifImageScale

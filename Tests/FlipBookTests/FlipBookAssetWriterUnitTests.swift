@@ -297,6 +297,55 @@ final class FlipBookAssetWriterUnitTests: XCTestCase {
         XCTAssertEqual(frames.count, 3)
     }
     
+    func testAssetAssociatedValueAccessors() {
+        guard let url = URL(string: "http://apple.com") else {
+            XCTFail("Invalid url")
+            return
+        }
+        
+        var asset: FlipBookAssetWriter.Asset = .video(url)
+        XCTAssertEqual(asset.assetURL, url)
+        XCTAssertEqual(asset.livePhoto, nil)
+        XCTAssertEqual(asset.livePhotoResources, nil)
+        
+        asset = .gif(url)
+        XCTAssertEqual(asset.assetURL, url)
+        XCTAssertEqual(asset.livePhoto, nil)
+        XCTAssertEqual(asset.livePhotoResources, nil)
+        
+        let livePhotoWriter = FlipBookLivePhotoWriter()
+        let expectation = self.expectation(description: "makeVideo")
+        makeVideo { (url) in
+            guard let url = url else {
+                XCTFail("Could not make movie")
+                return
+            }
+            livePhotoWriter.makeLivePhoto(from: nil, videoURL: url, progress: nil) { (result) in
+                switch result {
+                case let .success(livePhoto, resources):
+                    asset = .livePhoto(livePhoto, resources)
+                    expectation.fulfill()
+                case .failure(let error):
+                    XCTFail("Could not make Live Photo \(error)")
+                }
+            }
+        }
+        
+        waitForExpectations(timeout: 30) { (error) in
+            if let error = error {
+                XCTFail(error.localizedDescription)
+            }
+        }
+        
+        if case let .livePhoto(livePhoto, resources) = asset {
+            XCTAssertEqual(asset.assetURL, nil)
+            XCTAssertEqual(asset.livePhoto, livePhoto)
+            XCTAssertEqual(asset.livePhotoResources, resources)
+        } else {
+            XCTFail("Wrong asset type")
+        }
+    }
+    
     static var allTests = [
         ("testInit", testInit),
         ("testWriteToFrame", testWriteToFrame),
@@ -305,7 +354,8 @@ final class FlipBookAssetWriterUnitTests: XCTestCase {
         ("testMakeWriter", testMakeWriter),
         ("testMakeFrameRate", testMakeFrameRate),
         ("testMakePixelBuffer", testMakePixelBuffer),
-        ("testMakeFrames", testMakeFrames)
+        ("testMakeFrames", testMakeFrames),
+        ("testAssetAssociatedValueAccessors", testAssetAssociatedValueAccessors)
     ]
 }
 
