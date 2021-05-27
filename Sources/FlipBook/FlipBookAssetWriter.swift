@@ -220,7 +220,7 @@ public final class FlipBookAssetWriter: NSObject {
                                 }
                                 self.livePhotoWriter.make(from: imageURL, videoURL: url, progress: { prog in progress?(prog) }, completion: { result in
                                     switch result {
-                                    case let .success(livePhoto, resources):
+                                    case .success(let (livePhoto, resources)):
                                         completion(.success(.livePhoto(livePhoto, resources)))
                                     case .failure(let error):
                                         completion(.failure(error))
@@ -268,7 +268,7 @@ public final class FlipBookAssetWriter: NSObject {
                         }
                         self.livePhotoWriter.make(from: imageURL, videoURL: url, progress: { prog in progress?(prog) }, completion: { result in
                             switch result {
-                            case let .success(livePhoto, resources):
+                            case .success(let (livePhoto, resources)):
                                 completion(.success(.livePhoto(livePhoto, resources)))
                             case .failure(let error):
                                 completion(.failure(error))
@@ -414,7 +414,7 @@ public final class FlipBookAssetWriter: NSObject {
                                     
                                     // Handle Live Photo result
                                     switch result {
-                                    case let .success(livePhoto, resources):
+                                    case .success(let (livePhoto, resources)):
                                         completion(.success(.livePhoto(livePhoto, resources)))
                                     case .failure(let error):
                                         completion(.failure(error))
@@ -433,7 +433,7 @@ public final class FlipBookAssetWriter: NSObject {
                             
                             // Handle Live Photo result
                             switch result {
-                            case let .success(livePhoto, resources):
+                            case .success(let (livePhoto, resources)):
                                 completion(.success(.livePhoto(livePhoto, resources)))
                             case .failure(let error):
                                 completion(.failure(error))
